@@ -1,0 +1,27 @@
+name: 'GH deploy'
+description: 'Deploys an static application to GitHub Pages'
+inputs:
+  github_token:
+    description: 'GitHub token with permissions to push to the gh-pages branch'
+    required: true
+  to:  
+    description: 'Directory where the project must be deployed to'
+    required: true
+  dist_dir:
+    description: 'Directory where the built project is located'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: production-files
+        path: ./${{ inputs.dist_dir }}
+
+    - name: Deploy to gh-pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ inputs.github_token }}
+        publish_dir: ./${{ inputs.dist_dir }}
+        destination_dir: ./${{ inputs.to }}
