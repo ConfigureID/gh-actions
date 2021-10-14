@@ -1,0 +1,44 @@
+name: NPM Build
+
+on:
+  workflow_call:
+    inputs:
+      node_version:  
+        description: 'Node.js version to use'
+        required: true
+      dist_dir:
+        description: 'Directory where the built project is located'
+        required: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Node.js and Restore Cache
+        uses: actions/setup-node@v2
+        with:
+          node-version:  ${{ inputs.node_version }}
+          cache: "npm"
+
+      - name: Install NPM packages
+        run: npm ci
+        shell: bash
+
+      - name: Build project
+        run: npm run build
+        shell: bash
+
+      - name: Run tests
+        run: npm run test
+        shell: bash
+
+      - name: Upload production-ready build files
+        uses: actions/upload-artifact@v2
+        with:
+          name: production-files
+          path: ./${{ inputs.dist_dir }}
+ 
