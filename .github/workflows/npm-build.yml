@@ -6,9 +6,11 @@ on:
       node_version:  
         description: 'Node.js version to use'
         required: true
+        type: number
       dist_dir:
         description: 'Directory where the built project is located'
         required: true
+        type: string
 
 jobs:
   build:
