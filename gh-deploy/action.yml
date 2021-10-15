@@ -33,14 +33,17 @@ runs:
         name: production-files
         path: ./${{ inputs.dist_dir }}
     
-    - name: Substitute Environment Variables in files
-      if: ${{ inputs.envsubst == 'true' }}
-      uses: martinmoscovich/gh-actions/envsubst@main
+    - uses: ChristopherHX/conditional@main
       with:
-        path: ${{ inputs.dist_dir }}
-        file_pattern: ${{ inputs.envsubst_file_pattern }}
-        prefix: ${{ inputs.envsubst_prefix }}
-        suffix: ${{ inputs.envsubst_suffix }}
+        if: ${{ inputs.envsubst == 'true' }}
+        step: |
+          name: Substitute Environment Variables in files
+          uses: martinmoscovich/gh-actions/envsubst@main
+          with:
+            path: ${{ inputs.dist_dir }}
+            file_pattern: ${{ inputs.envsubst_file_pattern }}
+            prefix: ${{ inputs.envsubst_prefix }}
+            suffix: ${{ inputs.envsubst_suffix }}
 
     - name: Deploy to gh-pages
       uses: peaceiris/actions-gh-pages@v3
