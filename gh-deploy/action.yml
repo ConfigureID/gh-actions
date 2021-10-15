@@ -33,7 +33,7 @@ runs:
         name: production-files
         path: ./${{ inputs.dist_dir }}
     
-    - uses: ChristopherHX/conditional@main
+    - uses: ChristopherHX/conditional@b4a9649204f81002ec9a4ef7d4bf7d6b2ab7fa55
       with:
         if: ${{ inputs.envsubst == 'true' }}
         step: |
