@@ -26,6 +26,6 @@ runs:
   image: "Dockerfile"
   env:
     REPLACE_PATH: ${{ inputs.path }}
-    REPLACE_FILE_PATTERN: ${ inputs.file_pattern }}
+    REPLACE_FILE_PATTERN: ${{ inputs.file_pattern }}
     REPLACE_PREFIX: ${{ inputs.prefix }}
     REPLACE_SUFFIX: ${{ inputs.suffix }}
