@@ -5,7 +5,7 @@ FROM alpine:latest
 LABEL "maintainer"="Martin Moscovich <martinmoscovich@gmail.com>"
 
 COPY --from=binary /bin/envsub /bin/
-COPY --chown=root replace.sh /bin/
+COPY replace.sh /bin/
 RUN chmod +x /bin/replace.sh
 
-CMD /bin/replace.sh
+CMD replace.sh
