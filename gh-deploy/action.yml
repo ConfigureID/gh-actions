@@ -10,6 +10,20 @@ inputs:
   dist_dir:
     description: 'Directory where the built project is located'
     required: true
+  envsubst:
+    description: Substitute Environment Variables in files'
+    required: false
+    default: 'false'
+  envsubst_file_pattern:
+    description: 'File Pattern to locate files to be modified'
+    required: false
+  envsubst_prefix:
+    description: 'Allows configuring an alternative prefix for substitution patterns if the default of ${ would cause conflicts.'
+    required: false
+  envsubst_suffix:
+    description: 'Allows configuring an alternative suffix for substitution patterns if the default of } would cause conflicts.'
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -18,6 +32,15 @@ runs:
       with:
         name: production-files
         path: ./${{ inputs.dist_dir }}
+    
+    - name: Substitute Environment Variables in files
+      if: ${{ inputs.envsubst == 'true' }}
+      uses: martinmoscovich/gh-actions/envsubst@main
+      with:
+        path: ${{ inputs.dist_dir }}
+        file_pattern: ${{ inputs.envsubst_file_pattern }}
+        prefix: ${{ inputs.envsubst_prefix }}
+        suffix: ${{ inputs.envsubst_suffix }}
 
     - name: Deploy to gh-pages
       uses: peaceiris/actions-gh-pages@v3
