@@ -1,3 +1,5 @@
+FROM stephenc/envsub AS binary
+
 FROM alpine:latest
 
 LABEL "maintainer"="Martin Moscovich <martinmoscovich@gmail.com>"
