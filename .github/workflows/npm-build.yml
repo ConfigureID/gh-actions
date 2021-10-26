@@ -11,6 +11,10 @@ on:
         description: 'Directory where the built project is located'
         required: true
         type: string
+      source_ref:
+        description: 'The branch, tag or SHA to checkout'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -19,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          ref: ${{ inputs.source_ref }}
 
       - name: Install Node.js and Restore Cache
         uses: actions/setup-node@v2
