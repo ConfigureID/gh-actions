@@ -7,6 +7,12 @@ inputs:
   dist_dir:
     description: 'Directory where the built project is located'
     required: true
+  tag:
+    description: 'An optional tag for the release. If this is omitted the git ref will be used (if it is a tag).'
+    required: false
+  source_ref:
+    description: 'An optional commit reference. This will be used to create the tag if it does not exist.'
+    required: false
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
@@ -30,3 +36,6 @@ runs:
       with:
         artifacts: "${{ inputs.release_filename }}.zip"
         token: ${{ inputs.github_token }}
+        commit: ${{ inputs.source_ref }}
+        tag: ${{ inputs.tag }}
+        
