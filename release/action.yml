@@ -7,6 +7,9 @@ inputs:
   dist_dir:
     description: 'Directory where the built project is located'
     required: true
+  description:
+    description: 'An optional body for the release'
+    required: false
   tag:
     description: 'An optional tag for the release. If this is omitted the git ref will be used (if it is a tag).'
     required: false
@@ -38,4 +41,5 @@ runs:
         token: ${{ inputs.github_token }}
         commit: ${{ inputs.source_ref }}
         tag: ${{ inputs.tag }}
+        body: ${{ inputs.description }}
         
