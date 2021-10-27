@@ -14,7 +14,6 @@ inputs:
     required: false
     default: build-output
     type: string
-secrets:
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
@@ -60,6 +59,6 @@ runs:
     - name: Deploy to gh-pages
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ secrets.github_token }}
+        github_token: ${{ inputs.github_token }}
         publish_dir: ./${{ env.TMP_PATH }}
         destination_dir: ./${{ inputs.to }}

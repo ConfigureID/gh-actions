@@ -24,7 +24,6 @@ inputs:
     required: false
     default: build-output
     type: string
-secrets:
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
@@ -51,7 +50,7 @@ runs:
       uses: ncipollo/release-action@v1
       with:
         artifacts: "${{ inputs.release_filename }}.zip"
-        token: ${{ secrets.github_token }}
+        token: ${{ inputs.github_token }}
         commit: ${{ inputs.source_ref }}
         tag: ${{ inputs.tag }}
         body: ${{ inputs.description }}

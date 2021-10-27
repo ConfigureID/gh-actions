@@ -64,6 +64,7 @@ jobs:
       # Name of the zip file associated with that release
       release_filename: 'my-app.zip'
     secrets:
+      # Github Token with permission to download the release file and commit to the gh-pages branch
       github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -81,6 +82,7 @@ There are two types of actions:
 - Composite Actions may be use in a job combined with other steps (before and after). Reusable workflows can't.
 - Composite Actions may call other composite actions, reusable workflows can't call other reusable workflows (but they can call Composite actions).
 - Reusable workflows may contains multiple jobs.
+- Reusable workflows support both `inputs` and `secrets`, Composite actions only suppport `inputs`.
 - The UI shown for workflows is better, as all the differents steps performed are shown clearly. With actions, only one step is shown.
 
 Since the UI is better for reusable workflows, I prefer to use them when possible.
@@ -150,7 +152,7 @@ jobs:
           to: branches/${{ steps.extract_branch.outputs.current_branch }}
           # Optional. The name of the artifact created in a previous step. If not specified, build-output is used
           artifact_name: build-output
-        secrets:
+          # Github Token with permission to commit to the gh-pages of the the repository.
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
        - name: Something after
@@ -192,7 +194,7 @@ jobs:
           description: This is a great release!
           # Optional. The name of the artifact created in a previous step. If not specified, build-output is used
           artifact_name: build-output
-        secrets:
+          # Github Token with permission to create a release in the repository.
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
        - name: Something after
