@@ -1,5 +1,4 @@
 name: NPM Build
-description: 'Reusable Workflow to test and build an NPM Project'
 
 # Reusable workflow to build an NPM project
 # Steps:
