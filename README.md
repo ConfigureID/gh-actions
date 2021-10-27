@@ -29,14 +29,14 @@ See contents [here](.github/workflows/npm-build.yml).
 jobs:
   build:
     uses: martinmoscovich/gh-actions/.github/workflows/npm-build.yml@v1
-	with:
-	  node_version: 14
-	  # Directory where this project is built (some use dist, others build, etc)
-	  dist_dir: dist
-	  # Optional. Specifies branch, tag or commit to build. Defaults to the repo's default branch
-	  source_ref: main
-	  # Optional. Name to use when uploading the resulting artifact (defaults to build-output)
-	  artifact_name: build-output
+    with:
+      node_version: 14
+      # Directory where this project is built (some use dist, others build, etc)
+      dist_dir: dist
+      # Optional. Specifies branch, tag or commit to build. Defaults to the repo's default branch
+      source_ref: main
+      # Optional. Name to use when uploading the resulting artifact (defaults to build-output)
+      artifact_name: build-output
 ```
 
 ### Promote
@@ -57,7 +57,7 @@ jobs:
     name: Promote to Staging
     uses: martinmoscovich/gh-actions/.github/workflows/promote.yml@v1
     with:
-	  # Directory in GH Pages where the files must be deployed
+      # Directory in GH Pages where the files must be deployed
       to: staging
       # Version to promote
       tag: v1.2.0
@@ -106,14 +106,14 @@ jobs:
       - name: Build project
         uses: martinmoscovich/gh-actions/npm-build@v1
         with:
-		  node_version: 14
-		  # Directory where this project is built (some use dist, others build, etc)
-		  dist_dir: dist
-		  # Optional. Specifies branch, tag or commit to build. Defaults to the repo's default branch
-		  source_ref: main
-		  # Optional. Name to use when uploading the resulting artifact (defaults to build-output)
-		  artifact_name: build-output
-		  
+          node_version: 14
+          # Directory where this project is built (some use dist, others build, etc)
+          dist_dir: dist
+          # Optional. Specifies branch, tag or commit to build. Defaults to the repo's default branch
+          source_ref: main
+          # Optional. Name to use when uploading the resulting artifact (defaults to build-output)
+          artifact_name: build-output
+
        - name: Something after
          ...
 ```
@@ -137,22 +137,22 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-	    # Extracts the current branch/tag name. 
-	    # This is shown as an example, it's not required.
+        # Extracts the current branch/tag name. 
+        # This is shown as an example, it's not required.
       - name: Extract branch or tag name
-		uses: tj-actions/branch-names@v5
-		id: extract_branch
+        uses: tj-actions/branch-names@v5
+        id: extract_branch
 
       - name: Deploy to GH Pages
         uses: martinmoscovich/gh-actions/gh-deploy@v1
         with:
-		  # Directory where the project must be deployed to
-		  to: branches/${{ steps.extract_branch.outputs.current_branch }}
-		  # Optional. The name of the artifact created in a previous step. If not specified, build-output is used
-		  artifact_name: build-output
-		secrets:
-		  github_token: ${{ secrets.GITHUB_TOKEN }}
-		  
+          # Directory where the project must be deployed to
+          to: branches/${{ steps.extract_branch.outputs.current_branch }}
+          # Optional. The name of the artifact created in a previous step. If not specified, build-output is used
+          artifact_name: build-output
+        secrets:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
        - name: Something after
          ...
 ```
@@ -182,7 +182,7 @@ jobs:
       - name: Create release
         uses: martinmoscovich/gh-actions/release@v1
         with:
-	      # Optional. Commit reference, only used when the tag does not exist to create it
+          # Optional. Commit reference, only used when the tag does not exist to create it
           source_ref: main
           # Pptional. Tag for the release. If this is omitted the git ref will be used (if it is a tag)
           tag: v1.2.0
@@ -192,9 +192,9 @@ jobs:
           description: This is a great release!
           # Optional. The name of the artifact created in a previous step. If not specified, build-output is used
           artifact_name: build-output
-		secrets:
-		  github_token: ${{ secrets.GITHUB_TOKEN }}
-		  
+        secrets:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
        - name: Something after
          ...
 ```
