@@ -1,5 +1,14 @@
 name: NPM Build
+description: 'Reusable Workflow to test and build an NPM Project'
 
+# Reusable workflow to build an NPM project
+# Steps:
+# - Checkout the code
+# - Install the specified Node.js version and restores the node_modules cache if it exists
+# - Install dependencies (npm ci)
+# - Run Tests
+# - Build transpiled/minified output
+# - Uploads the artifact so the next steps can use it
 on:
   workflow_call:
     inputs:
@@ -12,8 +21,13 @@ on:
         required: true
         type: string
       source_ref:
-        description: 'The branch, tag or SHA to checkout'
+        description: 'The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)'
         required: false
+        type: string
+      artifact_name:
+        description: 'The name of the artifact to upload. Useful to download it on the next steps of the workflow. Default is build-output'
+        required: false
+        default: build-output
         type: string
 
 jobs:
@@ -35,18 +49,18 @@ jobs:
       - name: Install NPM packages
         run: npm ci
         shell: bash
+        
+      - name: Run tests
+        run: npm run test
+        shell: bash
 
       - name: Build project
         run: npm run build
         shell: bash
 
-      - name: Run tests
-        run: npm run test
-        shell: bash
-
       - name: Upload production-ready build files
         uses: actions/upload-artifact@v2
         with:
-          name: production-files
+          name: ${{ inputs.artifact_name }}
           path: ./${{ inputs.dist_dir }}
  

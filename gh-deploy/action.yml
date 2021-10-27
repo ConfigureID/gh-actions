@@ -1,28 +1,40 @@
 name: 'GH deploy'
 description: 'Deploys an static application to GitHub Pages'
+
+# Action to deploy the project files to Github Pages
+# Steps:
+# - Download an artifact from a previous step
+# - Deploy the files to the specified path (inputs.to) in Github Pages
 inputs:
-  github_token:
-    description: 'GitHub token with permissions to push to the gh-pages branch'
-    required: true
   to:  
     description: 'Directory where the project must be deployed to'
     required: true
-  dist_dir:
-    description: 'Directory where the built project is located'
+  artifact_name:
+    description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
+    required: false
+    default: build-output
+    type: string
+secrets:
+  github_token:
+    description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
-  envsubst:
-    description: Substitute Environment Variables in files'
-    required: false
-    default: 'false'
-  envsubst_file_pattern:
-    description: 'File Pattern to locate files to be modified'
-    required: false
-  envsubst_prefix:
-    description: 'Allows configuring an alternative prefix for substitution patterns if the default of ${ would cause conflicts.'
-    required: false
-  envsubst_suffix:
-    description: 'Allows configuring an alternative suffix for substitution patterns if the default of } would cause conflicts.'
-    required: false
+
+  # envsubst:
+  #   description: Substitute Environment Variables in files'
+  #   required: false
+  #   default: 'false'
+  # envsubst_file_pattern:
+  #   description: 'File Pattern to locate files to be modified'
+  #   required: false
+  # envsubst_prefix:
+  #   description: 'Allows configuring an alternative prefix for substitution patterns if the default of ${ would cause conflicts.'
+  #   required: false
+  # envsubst_suffix:
+  #   description: 'Allows configuring an alternative suffix for substitution patterns if the default of } would cause conflicts.'
+  #   required: false
+
+env:
+  TMP_PATH: tmp
 
 runs:
   using: "composite"
@@ -30,24 +42,24 @@ runs:
     - name: Download artifact
       uses: actions/download-artifact@v2
       with:
-        name: production-files
-        path: ./${{ inputs.dist_dir }}
+        name: ${{ inputs.artifact_name }}
+        path: ./${{ env.TMP_PATH }}
     
-    - uses: ChristopherHX/conditional@b4a9649204f81002ec9a4ef7d4bf7d6b2ab7fa55
-      with:
-        if: ${{ inputs.envsubst == 'true' }}
-        step: |
-          name: Substitute Environment Variables in files
-          uses: martinmoscovich/gh-actions/envsubst@main
-          with:
-            path: ${{ inputs.dist_dir }}
-            file_pattern: ${{ inputs.envsubst_file_pattern }}
-            prefix: ${{ inputs.envsubst_prefix }}
-            suffix: ${{ inputs.envsubst_suffix }}
+    # - uses: ChristopherHX/conditional@b4a9649204f81002ec9a4ef7d4bf7d6b2ab7fa55
+    #   with:
+    #     if: ${{ inputs.envsubst == 'true' }}
+    #     step: |
+    #       name: Substitute Environment Variables in files
+    #       uses: martinmoscovich/gh-actions/envsubst@main
+    #       with:
+    #         path: ${{ inputs.dist_dir }}
+    #         file_pattern: ${{ inputs.envsubst_file_pattern }}
+    #         prefix: ${{ inputs.envsubst_prefix }}
+    #         suffix: ${{ inputs.envsubst_suffix }}
 
     - name: Deploy to gh-pages
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ inputs.github_token }}
-        publish_dir: ./${{ inputs.dist_dir }}
+        github_token: ${{ secrets.github_token }}
+        publish_dir: ./${{ env.TMP_PATH }}
         destination_dir: ./${{ inputs.to }}

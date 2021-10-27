@@ -1,11 +1,14 @@
 name: 'Release'
 description: 'Create a release with the artifact'
+
+# Create Release action
+# Steps:
+# - Downloads artifact from previous step
+# - Compresses files
+# - Creates a release in the Github repo using the tag name and the artifact
 inputs:
   release_filename:  
     description: 'Name of the release file'
-    required: true
-  dist_dir:
-    description: 'Directory where the built project is located'
     required: true
   description:
     description: 'An optional body for the release'
@@ -16,29 +19,39 @@ inputs:
   source_ref:
     description: 'An optional commit reference. This will be used to create the tag if it does not exist.'
     required: false
+  artifact_name:
+    description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
+    required: false
+    default: build-output
+    type: string
+secrets:
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
+
+env:
+  TMP_PATH: tmp
+
 runs:
   using: "composite"
   steps:
     - name: Download artifact
       uses: actions/download-artifact@v2
       with:
-        name: production-files
-        path: ./${{ inputs.dist_dir }}
+        name: ${{ inputs.artifact_name }}
+        path: ./${{ env.TMP_PATH }}
 
     - name: Compress files
       uses: papeloto/action-zip@v1
       with:
-        files: ${{ inputs.dist_dir }}/
+        files: ${{ env.TMP_PATH }}/
         dest: ${{ inputs.release_filename }}.zip
 
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:
         artifacts: "${{ inputs.release_filename }}.zip"
-        token: ${{ inputs.github_token }}
+        token: ${{ secrets.github_token }}
         commit: ${{ inputs.source_ref }}
         tag: ${{ inputs.tag }}
         body: ${{ inputs.description }}

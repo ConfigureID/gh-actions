@@ -1,17 +1,41 @@
 name: 'NPM Build'
-description: 'Build a NPM Project'
+description: 'Action that tests and builds an NPM Project'
+
+# Action to build an NPM project
+# It performs the same steps as the "npm-build" reusable workflow, but it allows to add other steps to the job.
+# Steps:
+# - Checkout the code
+# - Install the specified Node.js version and restores the node_modules cache if it exists
+# - Install dependencies (npm ci)
+# - Run Tests
+# - Build transpiled/minified output
+# - Uploads the artifact so the next steps can use it
 inputs:
   node_version:  
     description: 'Node.js version to use'
     required: true
+    type: number
   dist_dir:
     description: 'Directory where the built project is located'
     required: true
+    type: string
+  source_ref:
+    description: 'The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)'
+    required: false
+    type: string
+  artifact_name:
+    description: 'The name of the artifact to upload. Useful to download it on the next steps of the workflow. Default is build-output'
+    required: false
+    default: build-output
+    type: string
+
 runs:
   using: "composite"
   steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        ref: ${{ inputs.source_ref }}
 
     - name: Install Node.js and Restore Cache
       uses: actions/setup-node@v2
@@ -22,17 +46,17 @@ runs:
     - name: Install NPM packages
       run: npm ci
       shell: bash
+      
+    - name: Run tests
+      run: npm run test
+      shell: bash
 
     - name: Build project
       run: npm run build
       shell: bash
 
-    - name: Run tests
-      run: npm run test
-      shell: bash
-
     - name: Upload production-ready build files
       uses: actions/upload-artifact@v2
       with:
-        name: production-files
+        name: ${{ inputs.artifact_name }}
         path: ./${{ inputs.dist_dir }}

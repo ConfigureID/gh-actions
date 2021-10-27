@@ -1,5 +1,8 @@
 name: Promote to Environment
 
+# Reusable workflow to Promote a release to a specified environment (eg. integration, staging, production)
+# It downloads an existing release file from Github.
+# If you prefer to build it when promoting, use "npm-build" workflow and "gh-deploy" action instead
 on:
   workflow_call:
     inputs:
@@ -22,7 +25,7 @@ on:
 
 env:
   TMP_PATH: tmp
-
+    
 jobs:
   promote:
     name: Promote
