@@ -1,0 +1,46 @@
+name: Prune Environment
+
+# Reusable workflow to prune an environment
+# Disables the Github Environment object
+# Removes the content of the directory in Github Pages
+on:
+  workflow_call:
+    inputs:
+      to:
+        description: 'Directory where the files are deployed'
+        required: true
+        type: string
+      environment_name:  
+        description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
+        required: false
+        default: ''
+        type: string
+    secrets:
+      github_token:
+        description: 'GitHub token with permissions to push to the gh-pages branch and disable an environment'
+        required: true
+
+jobs:
+  prune:
+      name: Prune
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Mark environment as deactivated
+          uses: bobheadxi/deployments@v0.4.3
+          with:
+            step: deactivate-env
+            token: ${{ secrets.github_token }}
+            env: ${{ inputs.environment_name || inputs.to }}
+            desc: PR for this branch was closed
+        
+        - name: Create empty dir
+          shell: bash
+          run: mkdir empty_dir
+
+        - name: Remove files from environment
+          uses: peaceiris/actions-gh-pages@v3
+          with:
+            github_token: ${{ secrets.github_token }}
+            publish_dir: ./empty_dir
+            destination_dir: ./${{ inputs.to }}
