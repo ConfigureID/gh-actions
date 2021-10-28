@@ -127,10 +127,10 @@ jobs:
 See contents [here](gh-deploy/action.yml).
 
 **Steps**
-- If an environment name is provided, creates a Github Deployment and Environment object with status "start" and the name
+- Ccreates a Github Deployment and Environment object with status "start" and the environment name
 - Downloads an artifact from a previous step
 - Deploys the files to the specified path (inputs.to) in Github Pages
-- If an environment name is provided, marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
+- Marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
 
 **Usage (when deploying a branch)**
 ```yaml

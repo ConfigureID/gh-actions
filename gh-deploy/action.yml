@@ -3,10 +3,10 @@ description: 'Deploys an static application to GitHub Pages'
 
 # Action to deploy the project files to Github Pages
 # Steps:
-# - If an environment name is provided, creates a Github Deployment object with status "start" and the name
+# - Creates a Github Deployment object with status "start" and the name
 # - Download an artifact from a previous step
 # - Deploy the files to the specified path (inputs.to) in Github Pages
-# - If an environment name is provided, marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
+# - Marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
 inputs:
   to:  
     description: 'Directory where the project must be deployed to'
@@ -17,7 +17,7 @@ inputs:
     default: build-output
     type: string
   environment_name:  
-    description: 'The environment name to create a deployment. If not specified, no GitHub deployment object is created'
+    description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
     required: false
     default: ''
   github_token:
@@ -32,12 +32,11 @@ runs:
   steps:
     - name: Start deployment
       uses: bobheadxi/deployments@v0.4.3
-      if: ${{ inputs.environment_name != '' }}
       id: deployment
       with:
         step: start
         token: ${{ inputs.github_token }}
-        env: ${{ inputs.environment_name }}
+        env: ${{ inputs.environment_name || inputs.to }}
         ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
       
     - name: Download artifact
@@ -55,7 +54,6 @@ runs:
         
     - name: Update deployment status
       uses: bobheadxi/deployments@v0.4.3
-      if: ${{ inputs.environment_name != '' && always() }}
       with:
         step: finish
         token: ${{ inputs.github_token }}
