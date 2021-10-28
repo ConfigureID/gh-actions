@@ -127,9 +127,10 @@ jobs:
 See contents [here](gh-deploy/action.yml).
 
 **Steps**
+- If an environment name is provided, creates a Github Deployment and Environment object with status "start" and the name
 - Downloads an artifact from a previous step
 - Deploys the files to the specified path (inputs.to) in Github Pages
-- Uploads the artifact so the next steps can use it
+- If an environment name is provided, marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
 
 **Usage (when deploying a branch)**
 ```yaml
@@ -152,6 +153,8 @@ jobs:
           to: branches/${{ steps.extract_branch.outputs.current_branch }}
           # Optional. The name of the artifact created in a previous step. If not specified, build-output is used
           artifact_name: build-output
+          # Optional. Name of the environment object to create and associate with branch or PR. If not defined, env is not created
+          environment_name: dev-${{ steps.extract_branch.outputs.current_branch }}
           # Github Token with permission to commit to the gh-pages of the the repository.
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
