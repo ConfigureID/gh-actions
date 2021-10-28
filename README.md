@@ -168,7 +168,7 @@ jobs:
 
 Useful for example when a PR is closed and the associated deployment is not required anymore.
 
-See contents [here](gh-undeploy/action.yml).
+See contents [here](gh-prune/action.yml).
 
 **Steps**
 - Disables the Github Environment object
