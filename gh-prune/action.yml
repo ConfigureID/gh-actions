@@ -1,10 +1,11 @@
-name: Prune Environment
-description: 'Disables a Github environment object and removes the files deployed'
+name: GH Pages Prune
+description: 'Removes the deployment from Github Pages and disbles the environment'
 
-# Action to prune an environment
+# Action to prune an environment and remove the associated files deployed in Github Pages.
+# Useful for example when a PR is closed and the associated deployment is not required anymore.
 # Steps:
 # - Disables the Github Environment object
-# - Removes the content of the directory in Github Pages
+# - Removes the directory in Github Pages
 inputs:
   to:  
     description: 'Directory where the files are deployed'
@@ -18,6 +19,7 @@ inputs:
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
+    type: string
 
 runs:
   using: "composite"

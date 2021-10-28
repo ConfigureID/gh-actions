@@ -28,7 +28,7 @@ See contents [here](.github/workflows/npm-build.yml).
 ```yaml
 jobs:
   build:
-    uses: martinmoscovich/gh-actions/.github/workflows/npm-build.yml@v1
+    uses: martinmoscovich/gh-actions/.github/workflows/npm-build.yml@v2
     with:
       node_version: 14
       # Directory where this project is built (some use dist, others build, etc)
@@ -55,7 +55,7 @@ See contents [here](.github/workflows/promote.yml).
 jobs:
   promote:
     name: Promote to Staging
-    uses: martinmoscovich/gh-actions/.github/workflows/promote.yml@v1
+    uses: martinmoscovich/gh-actions/.github/workflows/promote.yml@v2
     with:
       # Directory in GH Pages where the files must be deployed
       to: staging
@@ -106,7 +106,7 @@ jobs:
         ...
 
       - name: Build project
-        uses: martinmoscovich/gh-actions/npm-build@v1
+        uses: martinmoscovich/gh-actions/npm-build@v2
         with:
           node_version: 14
           # Directory where this project is built (some use dist, others build, etc)
@@ -147,7 +147,7 @@ jobs:
         id: extract_branch
 
       - name: Deploy to GH Pages
-        uses: martinmoscovich/gh-actions/gh-deploy@v1
+        uses: martinmoscovich/gh-actions/gh-deploy@v2
         with:
           # Directory where the project must be deployed to
           to: branches/${{ steps.extract_branch.outputs.current_branch }}
@@ -160,6 +160,46 @@ jobs:
 
        - name: Something after
          ...
+```
+
+### Remove deployment
+
+> Removes the deployment from Github Pages and disbles the environment
+
+Useful for example when a PR is closed and the associated deployment is not required anymore.
+
+See contents [here](gh-undeploy/action.yml).
+
+**Steps**
+- Disables the Github Environment object
+- Removes the directory in Github Pages
+
+**Usage (when deploying a branch)**
+```yaml
+jobs:
+  prune:
+    name: Prune
+    runs-on: ubuntu-latest
+
+    steps:
+        # Extracts the current branch/tag name. 
+        # This is shown as an example, it's not required.
+      - name: Extract branch or tag name
+        uses: tj-actions/branch-names@v5
+        id: extract_branch
+        
+      - name: Prunes enviroment and files
+        uses: martinmoscovich/gh-actions/gh-prune@v2
+        with:
+          # Directory where the project must be deployed to
+          to: branches/${{ steps.extract_branch.outputs.current_branch }}
+           # Optional. Name of the environment object to create and associate with branch or PR. If not defined, env is not created
+          environment_name: branch-${{ steps.extract_branch.outputs.current_branch }}
+          # Github Token with permission to commit to the gh-pages of the the repository.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+   
+   - name: Something after
+      ...
 ```
 
 ### Create Release
@@ -185,7 +225,7 @@ jobs:
         ...
 
       - name: Create release
-        uses: martinmoscovich/gh-actions/release@v1
+        uses: martinmoscovich/gh-actions/release@v2
         with:
           # Optional. Commit reference, only used when the tag does not exist to create it
           source_ref: main

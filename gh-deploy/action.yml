@@ -1,4 +1,4 @@
-name: 'GH deploy'
+name: GH Pages Deploy
 description: 'Deploys an static application to GitHub Pages'
 
 # Action to deploy the project files to Github Pages
@@ -24,6 +24,7 @@ inputs:
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
+    type: string
 
 env:
   TMP_PATH: tmp
