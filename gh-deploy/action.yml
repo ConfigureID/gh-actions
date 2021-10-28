@@ -20,6 +20,7 @@ inputs:
     description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
     required: false
     default: ''
+    type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
