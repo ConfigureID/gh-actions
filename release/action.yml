@@ -41,7 +41,7 @@ runs:
         path: ./${{ env.TMP_PATH }}
 
     - name: Compress files
-      uses: papeloto/action-zip@v1
+      uses: vimtor/action-zip@v1
       with:
         files: ${{ env.TMP_PATH }}/
         dest: ${{ inputs.release_filename }}.zip
