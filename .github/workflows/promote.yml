@@ -18,10 +18,6 @@ on:
         description: 'Target environment'
         required: true
         type: string
-    secrets:
-      github_token:
-        description: 'GitHub token with permissions to push to the gh-pages branch'
-        required: true
 
 env:
   TMP_PATH: tmp
@@ -37,7 +33,7 @@ jobs:
         id: deployment
         with:
           step: start
-          token: ${{ secrets.github_token }}
+          token: ${{ github.token }}
           env: ${{ inputs.to }}
           ref: tags/${{ inputs.tag }}
 
@@ -46,7 +42,7 @@ jobs:
         with:
           version: 'tags/${{ inputs.tag }}'
           file: ${{ inputs.release_filename }}
-          token: ${{ secrets.github_token }}
+          token: ${{ github.token }}
 
       - name: Unzip release
         uses: montudor/action-zip@v1
@@ -56,7 +52,7 @@ jobs:
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.github_token }}
+          github_token: ${{ github.token }}
           publish_dir: ./${{ env.TMP_PATH }}
           destination_dir: ./${{ inputs.to }}
 
@@ -64,7 +60,7 @@ jobs:
         uses: bobheadxi/deployments@v0.4.3
         with:
           step: finish
-          token: ${{ secrets.github_token }}
+          token: ${{ github.token }}
           status: ${{ job.status }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
           env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.to }}
