@@ -42,7 +42,7 @@ jobs:
       - name: Install Node.js and Restore Cache
         uses: actions/setup-node@v2
         with:
-          node-version:  ${{ inputs.node_version }}
+          node-version: ${{ inputs.node_version }}
           cache: "npm"
 
       - name: Install NPM packages
@@ -62,4 +62,4 @@ jobs:
         with:
           name: ${{ inputs.artifact_name }}
           path: ./${{ inputs.dist_dir }}
- 
+          retention-days: 1
