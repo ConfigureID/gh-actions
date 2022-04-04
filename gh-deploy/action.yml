@@ -10,7 +10,7 @@ description: 'Deploys an static application to GitHub Pages or GCS'
 inputs:
   to:  
     description: 'Directory where the project must be deployed to'
-    required: false
+    required: true
   artifact_name:
     description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
