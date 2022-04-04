@@ -52,7 +52,7 @@ runs:
     - name: Download release
       uses: dsaltares/fetch-gh-release-asset@master
       with:
-        version: "tags/${{ inputs.tag }}"
+        version: 'tags/${{ inputs.tag }}'
         file: ${{ inputs.release_filename }}
         token: ${{ github.token }}
 
