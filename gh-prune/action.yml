@@ -1,5 +1,5 @@
 name: GH Pages Prune
-description: 'Removes the deployment from Github Pages and disbles the environment'
+description: 'Removes the deployment from Github Pages/GCS and disbles the environment'
 
 # Action to prune an environment and remove the associated files deployed in Github Pages.
 # Useful for example when a PR is closed and the associated deployment is not required anymore.
@@ -20,11 +20,25 @@ inputs:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
     type: string
+  env_type:
+    description: 'Environment type'
+    required: true
+    type: string
+  gcp_credentials:
+    description: "GCP credentials to upload files to GCS"
+    required: false
+    type: string
+  bucket:
+    description: "Name of the GCS Bucket"
+    required: false
+    type: string
 
 runs:
   using: "composite"
+  
   steps:
     - name: Mark environment as deactivated
+      if: ${{ inputs.env_type == 'gh_pages' }}
       uses: bobheadxi/deployments@v0.4.3
       with:
         step: deactivate-env
@@ -33,12 +47,30 @@ runs:
         desc: PR for this branch was closed
     
     - name: Create empty dir
+      if: ${{ inputs.env_type == 'gh_pages' }}
       shell: bash
       run: mkdir empty_dir
 
     - name: Remove files from environment
+      if: ${{ inputs.env_type == 'gh_pages' }}
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ inputs.github_token }}
         publish_dir: ./empty_dir
         destination_dir: ./${{ inputs.to }}
+
+    - name: Authenticate with Google Cloud
+      if: ${{ inputs.env_type == 'gcp' }} 
+      uses: 'google-github-actions/auth@v0'      
+      id: 'auth'
+      with:
+        credentials_json: '${{ inputs.gcp_credentials }}'
+
+    - name: 'Set up Cloud SDK'
+      if: ${{ inputs.env_type == 'gcp' }}
+      uses: 'google-github-actions/setup-gcloud@v0'
+
+    - name: Delet files from bucket
+      if: ${{ inputs.env_type == 'gcp' }}
+      shell: bash
+      run: gsutil rm -r gs://${{ inputs.bucket }}/${{ inputs.to }}
