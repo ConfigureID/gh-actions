@@ -38,7 +38,6 @@ runs:
   
   steps:
     - name: Mark environment as deactivated
-      if: ${{ inputs.env_type == 'gh_pages' }}
       uses: bobheadxi/deployments@v0.4.3
       with:
         step: deactivate-env
