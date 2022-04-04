@@ -1,7 +1,7 @@
-name: GH Pages Deploy
+name: Deploy
 description: 'Deploys an static application to GitHub Pages or GCS'
 
-# Action to deploy the project files to Github Pages
+# Action to deploy the project files to Github Pages or GCS
 # Steps:
 # - Creates a Github Deployment object with status "start" and the name
 # - Download an artifact from a previous step
@@ -50,7 +50,6 @@ runs:
   
   steps:
     - name: Start deployment
-      if: ${{ inputs.deploy_type == 'gh_pages' }}
       uses: bobheadxi/deployments@v0.4.3      
       id: deployment
       with:
@@ -90,16 +89,6 @@ runs:
       with:
         credentials_json: '${{ inputs.gcp_credentials }}'
 
-    - name: Start GCS deployment
-      if: ${{ inputs.deploy_type == 'gcp' }}
-      uses: bobheadxi/deployments@v0.4.3      
-      id: deploymentgcs
-      with:
-        step: start
-        token: ${{ inputs.github_token }}
-        env: ${{ inputs.environment_name || inputs.to }}
-        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
-
     - name: Deploy to GCP Bucket
       if: ${{ inputs.deploy_type == 'gcp' }}
       uses: 'google-github-actions/upload-cloud-storage@v0'      
@@ -116,5 +105,5 @@ runs:
         step: finish
         token: ${{ inputs.github_token }}
         status: ${{ job.status }}
-        deployment_id: ${{ steps.deploymentgcs.outputs.deployment_id }}
+        deployment_id: ${{ steps.deployment.outputs.deployment_id }}
         env_url: https://${{ inputs.dns }}/${{ inputs.to }}/index.html
