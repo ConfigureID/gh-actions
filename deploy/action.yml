@@ -1,19 +1,28 @@
-name: Promote to Environment
+name: Deploy
+description: "Deploys an static application to a cloud service"
 
-# Action to Promote a release to a specified environment (eg. integration, staging, production)
-# It downloads an existing release file from Github.
-# If you prefer to build it when promoting, use "npm-build" workflow and "deploy" action instead
+# Action to deploy the project files to a Cloud Service (supports Github Pages and GCS)
+# Steps:
+# - Creates a Github Deployment object with status "start" and the name
+# - Download an artifact from a previous step
+# - Deploy the files to the specified path (inputs.to) in Github Pages or GCS
+# - Marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
 inputs:
-  tag:
-    description: 'Release version tag'
+  to:  
+    description: 'Directory where the project must be deployed to'
     required: true
+  artifact_name:
+    description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
+    required: false
+    default: build-output
     type: string
-  release_filename:
-    description: 'Name of the release file'
-    required: true
+  environment_name:  
+    description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
+    required: false
+    default: ''
     type: string
-  to:
-    description: 'Target environment'
+  github_token:
+    description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
     type: string
   cloud_service:
@@ -21,7 +30,7 @@ inputs:
     required: true
     type: string
   cloud_credentials:
-    description: 'Credentials of the cloud service where the release will be promoted to'
+    description: 'Credentials of the cloud service where the project will be deployed to'
     required: false
     type: string
   cloud_bucket:
@@ -45,21 +54,15 @@ runs:
       id: deployment
       with:
         step: start
-        token: ${{ github.token }}
-        env: ${{ inputs.to }}
-        ref: tags/${{ inputs.tag }}
+        token: ${{ inputs.github_token }}
+        env: ${{ inputs.environment_name || inputs.to }}
+        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
-    - name: Download release
-      uses: dsaltares/fetch-gh-release-asset@master
+    - name: Download artifact
+      uses: actions/download-artifact@v2
       with:
-        version: "tags/${{ inputs.tag }}"
-        file: ${{ inputs.release_filename }}
-        token: ${{ github.token }}
-
-    - name: Unzip release
-      uses: montudor/action-zip@v1
-      with:
-        args: unzip -qq ${{ inputs.release_filename }} -d ./${{ env.TMP_PATH }}
+        name: ${{ inputs.artifact_name }}
+        path: ./${{ env.TMP_PATH }}
 
     ##################
     # GH Pages
@@ -69,7 +72,7 @@ runs:
       if: ${{ inputs.cloud_service == 'gh_pages' }}
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ github.token }}
+        github_token: ${{ inputs.github_token }}
         publish_dir: ./${{ env.TMP_PATH }}
         destination_dir: ./${{ inputs.to }}
 
@@ -78,7 +81,7 @@ runs:
       uses: bobheadxi/deployments@v0.4.3
       with:
         step: finish
-        token: ${{ github.token }}
+        token: ${{ inputs.github_token }}
         status: ${{ job.status }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
         env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.to }}

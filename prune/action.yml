@@ -1,17 +1,17 @@
 name: Prune
-description: 'Removes the deployment from GCS or Github Pages and disbles the environment'
+description: 'Removes the deployment from the cloud service and disbles the environment'
 
-# Action to prune an environment and remove the associated files deployed in Github Pages or GCS
+# Action to prune an environment and remove the associated files deployed in the cloud service (supports Github Pages and GCS)
 # Useful for example when a PR is closed and the associated deployment is not required anymore.
 # Steps:
 # - Disables the Github Environment object
 # - Removes the directory in Github Pages
 inputs:
-  to:  
+  to:
     description: 'Directory where the files are deployed'
     required: true
     type: string
-  environment_name:  
+  environment_name:
     description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
     required: false
     default: ''
@@ -20,22 +20,22 @@ inputs:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
     type: string
-  env_type:
-    description: 'Environment type'
+  cloud_service:
+    description: 'Cloud Service to prune (supports GH Pages and GCP)'
     required: true
     type: string
-  gcp_credentials:
-    description: "GCP credentials to upload files to GCS"
+  cloud_credentials:
+    description: 'Credentials of the cloud service where the files will be pruned'
     required: false
     type: string
-  bucket:
-    description: "Name of the GCS Bucket"
+  cloud_bucket:
+    description: 'Name of the Cloud service (eg. GCS) bucket'
     required: false
     type: string
 
 runs:
   using: "composite"
-  
+
   steps:
     - name: Mark environment as deactivated
       uses: bobheadxi/deployments@v0.4.3
@@ -44,32 +44,40 @@ runs:
         token: ${{ inputs.github_token }}
         env: ${{ inputs.environment_name || inputs.to }}
         desc: PR for this branch was closed
-    
+
+    ##################
+    # GH Pages
+    ##################
+
     - name: Create empty dir
-      if: ${{ inputs.env_type == 'gh_pages' }}
+      if: ${{ inputs.cloud_service == 'gh_pages' }}
       shell: bash
       run: mkdir empty_dir
 
     - name: Remove files from environment
-      if: ${{ inputs.env_type == 'gh_pages' }}
+      if: ${{ inputs.cloud_service == 'gh_pages' }}
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ inputs.github_token }}
         publish_dir: ./empty_dir
         destination_dir: ./${{ inputs.to }}
 
+    ##################
+    # GCP
+    ##################
+
     - name: Authenticate with Google Cloud
-      if: ${{ inputs.env_type == 'gcp' }} 
-      uses: 'google-github-actions/auth@v0'      
+      if: ${{ inputs.cloud_service == 'gcp' }}
+      uses: 'google-github-actions/auth@v0'
       id: 'auth'
       with:
-        credentials_json: '${{ inputs.gcp_credentials }}'
+        credentials_json: '${{ inputs.cloud_credentials }}'
 
     - name: 'Set up Cloud SDK'
-      if: ${{ inputs.env_type == 'gcp' }}
+      if: ${{ inputs.cloud_service == 'gcp' }}
       uses: 'google-github-actions/setup-gcloud@v0'
 
-    - name: Delet files from bucket
-      if: ${{ inputs.env_type == 'gcp' }}
+    - name: Delete files from bucket
+      if: ${{ inputs.cloud_service == 'gcp' }}
       shell: bash
-      run: gsutil rm -r gs://${{ inputs.bucket }}/${{ inputs.to }}
+      run: gsutil rm -r gs://${{ inputs.cloud_bucket }}/${{ inputs.to }}
