@@ -1,7 +1,7 @@
-name: GH Pages OR GCS Prune
+name: Prune
 description: 'Removes the deployment from GCS or Github Pages and disbles the environment'
 
-# Action to prune an environment and remove the associated files deployed in Github Pages/GCS
+# Action to prune an environment and remove the associated files deployed in Github Pages or GCS
 # Useful for example when a PR is closed and the associated deployment is not required anymore.
 # Steps:
 # - Disables the Github Environment object

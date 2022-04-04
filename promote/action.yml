@@ -35,7 +35,7 @@ inputs:
 
 env:
   TMP_PATH: tmp
-    
+  
 runs:
   using: "composite"
 

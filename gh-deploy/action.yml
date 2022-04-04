@@ -1,16 +1,16 @@
-name: Deploy
-description: 'Deploys an static application to GitHub Pages or GCS'
+name: GH Pages Deploy
+description: 'Deploys an static application to GitHub Pages'
 
 # Action to deploy the project files to Github Pages or GCS
 # Steps:
 # - Creates a Github Deployment object with status "start" and the name
 # - Download an artifact from a previous step
-# - Deploy the files to the specified path (inputs.to) in Github Pages
+# - Deploy the files to the specified path (inputs.to) in Github Pages or GCS
 # - Marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
 inputs:
   to:  
     description: 'Directory where the project must be deployed to'
-    required: true
+    required: false
   artifact_name:
     description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
