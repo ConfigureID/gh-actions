@@ -1,0 +1,114 @@
+name: Promote to Environment
+
+# Action to Promote a release to a specified environment (eg. integration, staging, production)
+# It downloads an existing release file from Github.
+# If you prefer to build it when promoting, use "npm-build" workflow and "deploy" action instead
+inputs:
+  tag:
+    description: 'Release version tag'
+    required: true
+    type: string
+  release_filename:
+    description: 'Name of the release file'
+    required: true
+    type: string
+  to:
+    description: 'Target environment'
+    required: true
+    type: string
+  cloud_service:
+    description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
+    required: true
+    type: string
+  cloud_credentials:
+    description: 'Credentials of the cloud service where the release will be promoted to'
+    required: false
+    type: string
+  cloud_bucket:
+    description: 'Name of the Cloud service (eg. GCS) bucket'
+    required: false
+    type: string
+  base_url:
+    description: 'Base URL where the deployment can be accessed'
+    required: false
+    type: string
+
+env:
+  TMP_PATH: tmp
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Start deployment
+      uses: bobheadxi/deployments@v0.4.3
+      id: deployment
+      with:
+        step: start
+        token: ${{ github.token }}
+        env: ${{ inputs.to }}
+        ref: tags/${{ inputs.tag }}
+
+    - name: Download release
+      uses: dsaltares/fetch-gh-release-asset@master
+      with:
+        version: 'tags/${{ inputs.tag }}'
+        file: ${{ inputs.release_filename }}
+        token: ${{ github.token }}
+
+    - name: Unzip release
+      uses: montudor/action-zip@v1
+      with:
+        args: unzip -qq ${{ inputs.release_filename }} -d ./${{ env.TMP_PATH }}
+
+    ##################
+    # GH Pages
+    ##################
+
+    - name: Deploy to gh-pages
+      if: ${{ inputs.cloud_service == 'gh_pages' }}
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ github.token }}
+        publish_dir: ./${{ env.TMP_PATH }}
+        destination_dir: ./${{ inputs.to }}
+
+    - name: Update deployment status
+      if: ${{ inputs.cloud_service == 'gh_pages' }}
+      uses: bobheadxi/deployments@v0.4.3
+      with:
+        step: finish
+        token: ${{ github.token }}
+        status: ${{ job.status }}
+        deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+        env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.to }}
+
+    ##################
+    # GCP
+    ##################
+
+    - name: Authenticate with Google Cloud
+      if: ${{ inputs.cloud_service == 'gcp' }}
+      uses: 'google-github-actions/auth@v0'
+      id: 'auth'
+      with:
+        credentials_json: '${{ inputs.cloud_credentials }}'
+
+    - name: Deploy to GCP Bucket
+      if: ${{ inputs.cloud_service == 'gcp' }}
+      uses: 'google-github-actions/upload-cloud-storage@v0'
+      id: 'upload-file'
+      with:
+        path: ./${{ env.TMP_PATH }}
+        destination: '${{ inputs.cloud_bucket }}/${{ inputs.to }}'
+        parent: true
+
+    - name: Update GCS deployment status
+      if: ${{ inputs.cloud_service == 'gcp' }}
+      uses: bobheadxi/deployments@v0.4.3
+      with:
+        step: finish
+        token: ${{ inputs.github_token }}
+        status: ${{ job.status }}
+        deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+        env_url: https://${{ inputs.base_url }}/${{ inputs.to }}/index.html
