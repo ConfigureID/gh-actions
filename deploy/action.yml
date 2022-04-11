@@ -41,10 +41,6 @@ inputs:
     description: 'Base URL where the deployment can be accessed'
     required: false
     type: string
-  cloud_path:
-    description: 'Path to invalidate CDN'
-    required: false
-    type: string
   cloud_lb:
     description: 'Load Balancer Name'
     required: false
