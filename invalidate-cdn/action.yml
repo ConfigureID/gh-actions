@@ -5,7 +5,7 @@ description: Invalidate Cloud CDN for a specific path
 inputs:
   cloud_credentials:
     description: 'Credentials of the cloud service where the files will be pruned'
-    required: false
+    required: true
     type: string
   cloud_path:
     description: 'Name of the Cloud service (eg. GCS) bucket'
