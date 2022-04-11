@@ -36,4 +36,4 @@ runs:
 
     - name: Invalidate Cloud CDN
       shell: bash
-      run: gcloud compute url-maps invalidate-cdn-cache ${{ inputs.cloud_lb }} --path /${{ inputs.cloud_path }}/*
+      run: gcloud compute url-maps invalidate-cdn-cache ${{ inputs.cloud_lb }} --path /${{ inputs.cloud_path }}/* --async
