@@ -1,0 +1,36 @@
+name: Deploy
+description: "Deploys an static application to a cloud service"
+
+inputs:
+  to:  
+    description: 'Directory where the project must be deployed to'
+    required: true
+  cloud_credentials:
+    description: 'Credentials of the cloud service where the project will be deployed to'
+    required: false
+    type: string
+  cloud_bucket:
+    description: 'Name of the Cloud service (eg. GCS) bucket'
+    required: false
+    type: string
+  cache:
+    description: 'Enable cache'
+    required: true
+    type: bool
+  check_destination:
+    description: 'Check the destination'
+    required: true
+    type: string
+    default: 'prod|staging|dev|branches'
+  exclude:
+    description: 'Exclude files'
+    required: true
+    type: string
+  path:
+    description: 'PATH where the static files are located'
+    required: true
+    type: string
+
+runs:
+  using: docker
+  image: Dockerfile
