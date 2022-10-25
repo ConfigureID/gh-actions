@@ -105,31 +105,18 @@ runs:
     #   if: ${{ inputs.cloud_service == 'gcp' }}
     #   uses: 'google-github-actions/setup-gcloud@v0.6.0'
 
-    # No cache
+    # Rsync to GCS
     - name: Rsync GCS
-      if: ${{ ! inputs.cache && inputs.cloud_service == 'gcp' }}
+      if: ${{ inputs.cloud_service == 'gcp' }}
       uses: ./rsync
       with:
         to: '${{ inputs.to }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
         cloud_credentials: '${{ inputs.cloud_credentials }}'
-        checkout_destination: 'prod|staging|dev|branches'
+        allowed_destination: 'prod|staging|dev|branches/|releases/'
         path: ./${{ env.TMP_PATH }}              
         exclude: '.*\.md$|\.gitignore$|\.git/.*$|\.github/.*$'
-        cache: false 
-
-    # With Cache
-    - name: Rsync GCS
-      if: ${{ inputs.cloud_service && inputs.cloud_service == 'gcp' }}
-      uses: ./rsync
-      with:
-        to: '${{ inputs.to }}'
-        cloud_bucket: '${{ inputs.cloud_bucket }}'
-        cloud_credentials: '${{ inputs.cloud_credentials }}'
-        checkout_destination: 'prod|staging|dev|branches'
-        path: ./${{ env.TMP_PATH }}              
-        exclude: '.*\.md$|\.gitignore$|\.git/.*$|\.github/.*$'
-        cache: true  
+        cache: '${{ inputs.cache }}'
 
     # - name: Deploy to GCP Bucket
     #   if: ${{ inputs.cloud_service == 'gcp' }}

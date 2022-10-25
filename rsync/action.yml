@@ -17,11 +17,11 @@ inputs:
     description: 'Enable cache'
     required: true
     type: bool
-  check_destination:
+  allowed_destination:
     description: 'Check the destination'
     required: true
     type: string
-    default: 'prod|staging|dev|branches'
+    default: ''
   exclude:
     description: 'Exclude files'
     required: true

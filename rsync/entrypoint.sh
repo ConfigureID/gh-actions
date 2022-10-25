@@ -4,41 +4,35 @@ echo "$INPUT_CLOUD_CREDENTIALS" > /secrets.json
 gcloud auth activate-service-account --key-file=/secrets.json
 rm /secrets.json
 
-# Check destination
-if [[ $INPUT_TO =~ $INPUT_CHECK_DESTINATION ]]; then
-    echo "Destination exists"
+# Cache Options
+if [[ $INPUT_CACHE ]]; then
+    CACHE_OPTIONS="Cache-Control:public, max-age=3600"
 else
-    echo "Error - Destination doesn't exist"
+    CACHE_OPTIONS="Cache-Control:no-store"
+fi
+
+# Check destination
+if [[ $INPUT_TO =~ $INPUT_ALLOWED_DESTINATION ]]; then
+    echo "Destination allowed"
+else
+    echo "Error - Destination not allowed"
     exit 1
 fi
 
 # Validate the directory is not empty
 if [ -z "$(ls -A ${PATH})" ]; then
-    echo "Empty"
+    echo "The source directory contains files. Publish allowed"
     exit 1
 else
-    echo "Not Empty"
+    echo "The source directory contains files. Publish allowed"
 
-    if [ $INPUT_CACHE ]; then
-            # Sync files to bucket WITH CACHE
-        echo "Syncing bucket $BUCKET ..."
-        gsutil -m rsync -r -c -d -x "$INPUT_EXCLUDE" /github/workspace/$PATH gs://$INPUT_CLOUD_BUCKET/$INPUT_TO
+    # Sync files to bucket
+    echo "Syncing bucket $BUCKET ..."
+    gsutil -m -h ${CACHE_OPTIONS} rsync -r -c -d -x "$INPUT_EXCLUDE" /github/workspace/$PATH gs://$INPUT_CLOUD_BUCKET/$INPUT_TO
 
-        if [ $? -ne 0 ]; then
-            echo "Syncing with CACHE failed"
-            exit 1
-        fi
-        echo "Done."
-
-    else
-        # Sync files to bucket WHIOUT CACHE
-        echo "Syncing bucket $BUCKET ..."
-        gsutil -m -h "Cache-Control:no-store" rsync -r -c -d -x "$INPUT_EXCLUDE" /github/workspace/$PATH gs://$INPUT_CLOUD_BUCKET/$INPUT_TO
-
-        if [ $? -ne 0 ]; then
-            echo "Syncing without CACHE failed"
-            exit 1
-        fi
-        echo "Done."
+    if [ $? -ne 0 ]; then
+        echo "Syncing without CACHE failed"
+        exit 1
     fi
+    echo "Done."
 fi
