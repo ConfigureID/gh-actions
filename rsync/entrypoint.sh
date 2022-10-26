@@ -17,7 +17,7 @@ fi
 if [[ $INPUT_TO =~ $INPUT_ALLOWED_DESTINATION ]]; then
     echo "Destination allowed"
 else
-    echo "Error - Destination not allowed"
+    echo "Error - Destination not allowed ($INPUT_TO)"
     exit 1
 fi
 
