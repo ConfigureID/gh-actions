@@ -26,7 +26,7 @@ if [ -z "$(ls -A ${PATH})" ]; then
 else
     echo "The source directory contains files. Publish allowed"
 
-    # Sync files to bucket
+    # Syncing files to bucket
     echo "Syncing bucket $BUCKET ..."
     gsutil -m -h ${CACHE_OPTIONS} rsync -r -c -d -x "$INPUT_EXCLUDE" /github/workspace/$PATH gs://$INPUT_CLOUD_BUCKET/$INPUT_TO
 
