@@ -45,6 +45,11 @@ inputs:
     description: 'Enable cache'
     required: true
     type: bool
+  allowed_destination:
+    description: 'Check the destination'
+    required: true
+    type: string
+    default: 'prod|staging|dev|branches[/]|releases[/]'
 
 env:
   TMP_PATH: tmp
@@ -109,7 +114,7 @@ runs:
         to: '${{ inputs.to }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
         cloud_credentials: '${{ inputs.cloud_credentials }}'
-        allowed_destination: 'prod|staging|dev|branches[/]|releases[/]'
+        allowed_destination: '${{ inputs.allowed_destination }}'
         path: ./${{ env.TMP_PATH }}              
         exclude: '.*\.md$|\.gitignore$|\.git/.*$|\.github/.*$'
         cache: '${{ inputs.cache }}'
