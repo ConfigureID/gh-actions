@@ -101,10 +101,6 @@ runs:
       with:
         credentials_json: '${{ inputs.cloud_credentials }}'
 
-    # - name: Set up Cloud SDK
-    #   if: ${{ inputs.cloud_service == 'gcp' }}
-    #   uses: 'google-github-actions/setup-gcloud@v0.6.0'
-
     # Rsync to GCS
     - name: Rsync GCS
       if: ${{ inputs.cloud_service == 'gcp' }}
@@ -113,19 +109,10 @@ runs:
         to: '${{ inputs.to }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
         cloud_credentials: '${{ inputs.cloud_credentials }}'
-        allowed_destination: 'prod|staging|dev|branches/|releases/'
+        allowed_destination: 'prod|staging|dev|branches[/]|releases[/]'
         path: ./${{ env.TMP_PATH }}              
         exclude: '.*\.md$|\.gitignore$|\.git/.*$|\.github/.*$'
         cache: '${{ inputs.cache }}'
-
-    # - name: Deploy to GCP Bucket
-    #   if: ${{ inputs.cloud_service == 'gcp' }}
-    #   uses: 'google-github-actions/upload-cloud-storage@v0.8.0'
-    #   id: 'upload-file'
-    #   with:
-    #     path: ./${{ env.TMP_PATH }}
-    #     destination: '${{ inputs.cloud_bucket }}/${{ inputs.to }}'
-    #     parent: true
 
     - name: Update GCS deployment status
       if: ${{ inputs.cloud_service == 'gcp' }}

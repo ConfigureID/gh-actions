@@ -12,7 +12,7 @@ else
 fi
 
 # Check destination
-if [[ $INPUT_TO =~ $INPUT_ALLOWED_DESTINATION ]]; then
+if [[ $INPUT_TO =~ "/$INPUT_ALLOWED_DESTINATION" ]]; then
     echo "Destination allowed"
 else
     echo "Error - Destination not allowed"
@@ -21,7 +21,7 @@ fi
 
 # Validate the directory is not empty
 if [ -z "$(ls -A ${PATH})" ]; then
-    echo "The source directory contains files. Publish allowed"
+    echo "Error - The source directory is empty. Publish not allowed"
     exit 1
 else
     echo "The source directory contains files. Publish allowed"
@@ -31,7 +31,7 @@ else
     gsutil -m -h ${CACHE_OPTIONS} rsync -r -c -d -x "$INPUT_EXCLUDE" /github/workspace/$PATH gs://$INPUT_CLOUD_BUCKET/$INPUT_TO
 
     if [ $? -ne 0 ]; then
-        echo "Syncing without CACHE failed"
+        echo "Syncing failed"
         exit 1
     fi
     echo "Done."
