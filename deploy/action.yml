@@ -42,14 +42,19 @@ inputs:
     required: false
     type: string
   cache:
-    description: 'Enable cache'
+    description: 'Enable or disable cache'
     required: true
     type: bool
   allowed_destination:
     description: 'Check the destination'
     required: true
     type: string
-    default: 'prod|staging|dev|branches[/]|releases[/]'
+    default: '[/]prod|[/]staging|[/]dev|[/]branches[/]|releases[/]'
+  exclude:
+    description: 'Regrex expression to exclude files'
+    required: false
+    type: string
+    default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*|\.github/.*$'
 
 env:
   TMP_PATH: tmp
@@ -109,14 +114,14 @@ runs:
     # Rsync to GCS
     - name: Rsync GCS
       if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: ./rsync
+      uses: ConfigureID/gh-actions/rsync@main
       with:
         to: '${{ inputs.to }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
         cloud_credentials: '${{ inputs.cloud_credentials }}'
         allowed_destination: '${{ inputs.allowed_destination }}'
         path: ./${{ env.TMP_PATH }}              
-        exclude: '.*\.md$|\.gitignore$|\.git/.*$|\.github/.*$'
+        exclude: '${{ inputs.exclude }}'
         cache: '${{ inputs.cache }}'
 
     - name: Update GCS deployment status

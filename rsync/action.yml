@@ -14,7 +14,7 @@ inputs:
     required: false
     type: string
   cache:
-    description: 'Enable cache'
+    description: 'Enable or disable cache'
     required: true
     type: bool
   allowed_destination:
@@ -23,7 +23,7 @@ inputs:
     type: string
     default: ''
   exclude:
-    description: 'Exclude files'
+    description: 'Regrex expression to exclude files'
     required: true
     type: string
   path:
