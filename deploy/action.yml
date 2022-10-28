@@ -110,11 +110,14 @@ runs:
     # GCP
     ##################
     
+    # Copies the current action's repository to the specified location, 
+    # so other actions from the same repo may be called (see rsync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and rsync
     - name: Copy custom action repository
       shell: bash
       run: |
-        chmod +x ${{ github.action_path }}/get_actions.sh
-        ${{ github.action_path }}/get_actions.sh
+        chmod +x ${{ github.action_path }}/copy_actions_repo.sh
+        ${{ github.action_path }}/copy_actions_repo.sh
       env:
         CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
         DESTINTATION_PATH: ${{ github.workspace }}/.github/actions
