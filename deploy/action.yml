@@ -45,7 +45,6 @@ inputs:
     description: 'Enable or disable cache'
     required: true
     type: bool
-    default: false
   allowed_destination:
     description: 'Check the destination'
     required: false
