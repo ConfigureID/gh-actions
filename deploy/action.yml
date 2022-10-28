@@ -45,6 +45,7 @@ inputs:
     description: 'Enable or disable cache'
     required: true
     type: bool
+    default: false
   allowed_destination:
     description: 'Check the destination'
     required: false
@@ -121,7 +122,7 @@ runs:
     # Rsync to GCS
     - name: Rsync GCS
       if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: ./.github/actions/elvisfgl/gh-actions/rsync
+      uses: ./.github/actions/ConfigureID/gh-actions/rsync
       with:
         to: '${{ inputs.to }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
