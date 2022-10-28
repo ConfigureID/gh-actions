@@ -47,7 +47,7 @@ inputs:
     type: bool
   allowed_destination:
     description: 'Check the destination'
-    required: true
+    required: false
     type: string
     default: '[/]prod$|[/]staging$|[/]dev$|[/]branches[/]|releases[/]'
   exclude:
@@ -55,6 +55,11 @@ inputs:
     required: false
     type: string
     default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
+  delete:
+    description: 'Delete extra files in the destination not found in the source'
+    required: false
+    type: bool
+    default: true
 
 env:
   TMP_PATH: tmp
@@ -81,7 +86,7 @@ runs:
     ##################
     # GH Pages
     ##################
-
+    
     - name: Deploy to gh-pages
       if: ${{ inputs.cloud_service == 'gh_pages' }}
       uses: peaceiris/actions-gh-pages@v3
@@ -103,18 +108,20 @@ runs:
     ##################
     # GCP
     ##################
-
-    - name: Authenticate with Google Cloud
-      if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: 'google-github-actions/auth@v0.7.1'
-      id: 'auth'
-      with:
-        credentials_json: '${{ inputs.cloud_credentials }}'
+    
+    - name: Copy custom action repository
+      shell: bash
+      run: |
+        chmod +x ${{ github.action_path }}/get_actions.sh
+        ${{ github.action_path }}/get_actions.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINTATION_PATH: ${{ github.workspace }}/.github/actions
 
     # Rsync to GCS
     - name: Rsync GCS
       if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: ConfigureID/gh-actions/rsync@main
+      uses: ./.github/actions/elvisfgl/gh-actions/rsync
       with:
         to: '${{ inputs.to }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
@@ -122,7 +129,8 @@ runs:
         allowed_destination: '${{ inputs.allowed_destination }}'
         path: ./${{ env.TMP_PATH }}              
         exclude: '${{ inputs.exclude }}'
-        cache: '${{ inputs.cache }}'
+        cache: ${{ inputs.cache }}
+        delete: ${{ inputs.delete }}
 
     - name: Update GCS deployment status
       if: ${{ inputs.cloud_service == 'gcp' }}

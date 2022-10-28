@@ -30,6 +30,10 @@ inputs:
     description: 'PATH where the static files are located'
     required: true
     type: string
+  delete:
+    description: 'Delete extra files in the destination not found in the source'
+    required: true
+    type: bool
 
 runs:
   using: docker
