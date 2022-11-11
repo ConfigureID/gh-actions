@@ -41,6 +41,25 @@ inputs:
     description: 'Base URL where the deployment can be accessed'
     required: false
     type: string
+  cache:
+    description: 'Enable or disable cache'
+    required: true
+    type: bool
+  allowed_destination:
+    description: 'Regex with the allowed destinations. Others will fail'
+    required: false
+    type: string
+    default: '[/]prod$|[/]staging$|[/]dev$|([/](branches|releases)[/][A-Za-z0-9._%+-\/]+$)'
+  exclude:
+    description: 'Regrex expression to exclude files'
+    required: false
+    type: string
+    default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
+  delete:
+    description: 'Delete extra files in the destination not found in the source'
+    required: false
+    type: bool
+    default: true
 
 env:
   TMP_PATH: tmp
@@ -67,7 +86,7 @@ runs:
     ##################
     # GH Pages
     ##################
-
+    
     - name: Deploy to gh-pages
       if: ${{ inputs.cloud_service == 'gh_pages' }}
       uses: peaceiris/actions-gh-pages@v3
@@ -89,22 +108,32 @@ runs:
     ##################
     # GCP
     ##################
+    
+    # Copies the current action's repository to the specified location, 
+    # so other actions from the same repo may be called (see rsync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and rsync
+    - name: Copy custom action repository
+      shell: bash
+      run: |
+        chmod +x ${{ github.action_path }}/copy_actions_repo.sh
+        ${{ github.action_path }}/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINTATION_PATH: ${{ github.workspace }}/.github/actions
 
-    - name: Authenticate with Google Cloud
+    # Rsync to GCS
+    - name: Rsync GCS
       if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: 'google-github-actions/auth@v0.7.1'
-      id: 'auth'
+      uses: ./.github/actions/ConfigureID/gh-actions/rsync
       with:
-        credentials_json: '${{ inputs.cloud_credentials }}'
-
-    - name: Deploy to GCP Bucket
-      if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: 'google-github-actions/upload-cloud-storage@v0.8.0'
-      id: 'upload-file'
-      with:
-        path: ./${{ env.TMP_PATH }}
-        destination: '${{ inputs.cloud_bucket }}/${{ inputs.to }}'
-        parent: true
+        to: '${{ inputs.to }}'
+        cloud_bucket: '${{ inputs.cloud_bucket }}'
+        cloud_credentials: '${{ inputs.cloud_credentials }}'
+        allowed_destination: '${{ inputs.allowed_destination }}'
+        path: ./${{ env.TMP_PATH }}              
+        exclude: '${{ inputs.exclude }}'
+        cache: ${{ inputs.cache }}
+        delete: ${{ inputs.delete }}
 
     - name: Update GCS deployment status
       if: ${{ inputs.cloud_service == 'gcp' }}
