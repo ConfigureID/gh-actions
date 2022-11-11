@@ -16,6 +16,10 @@ inputs:
     description: 'Target environment'
     required: true
     type: string
+  environment_name:  
+    description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
+    required: false
+    default: ''    
   cloud_service:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
     required: true
@@ -50,7 +54,7 @@ runs:
       with:
         step: start
         token: ${{ github.token }}
-        env: ${{ inputs.to }}
+        env: ${{ inputs.environment_name || inputs.to }}
         ref: tags/${{ inputs.tag }}
 
     - name: Download release
