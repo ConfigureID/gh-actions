@@ -46,10 +46,10 @@ inputs:
     required: true
     type: bool
   allowed_destination:
-    description: 'Check the destination'
+    description: 'Regex with the allowed destinations. Others will fail'
     required: false
     type: string
-    default: '[/]prod$|[/]staging$|[/]dev$|[/]branches[/]|releases[/]'
+    default: '[/]prod$|[/]staging$|[/]dev$|([/](branches|releases)[/][A-Za-z0-9._%+-\/]+$)'
   exclude:
     description: 'Regrex expression to exclude files'
     required: false
