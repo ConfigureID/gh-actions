@@ -119,7 +119,7 @@ runs:
         ${{ github.action_path }}/copy_actions_repo.sh
       env:
         CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
-        DESTINTATION_PATH: ${{ github.workspace }}/.github/actions
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
     # Rsync to GCS
     - name: Rsync GCS
