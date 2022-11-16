@@ -106,6 +106,7 @@ runs:
         step: finish
         token: ${{ inputs.github_token }}
         status: ${{ job.status }}
+        env: ${{ steps.deployment.outputs.env }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
         env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.environment_name }}
 
@@ -153,5 +154,6 @@ runs:
         step: finish
         token: ${{ inputs.github_token }}
         status: ${{ job.status }}
+        env: ${{ steps.deployment.outputs.env }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
         env_url: https://${{ inputs.base_url }}/${{ env.destination_dir }}/index.html
