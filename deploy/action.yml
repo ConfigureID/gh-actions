@@ -117,9 +117,9 @@ runs:
     - name: Set the destination directory
       shell: bash
       run: |
-        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}") >>
+        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}")
         echo "destination_dir=$to" >> $GITHUB_ENV
-    
+ 
     # Copies the current action's repository to the specified location, 
     # so other actions from the same repo may be called (see rsync below)
     # This allows us to use the same version of the action for both "deploy" (the current action) and rsync

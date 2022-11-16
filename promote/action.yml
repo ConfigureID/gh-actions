@@ -104,7 +104,7 @@ runs:
     - name: Set the destination directory
       shell: bash
       run: |
-        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}") >>
+        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}")
         echo "destination_dir=$to" >> $GITHUB_ENV
 
     - name: Authenticate with Google Cloud
