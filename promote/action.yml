@@ -102,6 +102,7 @@ runs:
 
     # Sets the destination directory. It's inputs.to or (inputs.namespace/inputs.environment_name)
     - name: Set the destination directory
+      shell: bash
       run: |
         to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}") >>
         echo "destination_dir=$to" >> $GITHUB_ENV
