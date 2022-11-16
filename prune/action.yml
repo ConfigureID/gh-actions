@@ -82,7 +82,6 @@ runs:
       id: 'auth'
       with:
         credentials_json: '${{ inputs.cloud_credentials }}'
-        create_credentials_file: false
 
     - name: 'Set up Cloud SDK'
       if: ${{ inputs.cloud_service == 'gcp' }}
