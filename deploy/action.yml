@@ -82,7 +82,7 @@ runs:
         ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
     - name: Download artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.artifact_name }}
         path: ./${{ env.TMP_PATH }}
