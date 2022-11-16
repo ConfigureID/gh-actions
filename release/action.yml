@@ -42,6 +42,7 @@ runs:
       uses: montudor/action-zip@v1
 
     - name: Compress files
+      shell: bash
       run: zip -qq -r ../${{ inputs.release_filename }}.zip .
       working-directory: ./tmp
 
