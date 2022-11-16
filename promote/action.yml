@@ -12,14 +12,19 @@ inputs:
     description: 'Name of the release file'
     required: true
     type: string
-  to:
-    description: 'Target environment'
+  namespace:  
+    description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
     required: true
     type: string
   environment_name:  
-    description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
+    description: 'The environment name to create a deployment.'
+    required: true
+    type: string
+  to:
+    description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
     required: false
-    default: ''    
+    default: ''
+    type: string
   cloud_service:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
     required: true
@@ -54,7 +59,7 @@ runs:
       with:
         step: start
         token: ${{ github.token }}
-        env: ${{ inputs.environment_name || inputs.to }}
+        env: ${{ inputs.environment_name }}
         ref: tags/${{ inputs.tag }}
 
     - name: Download release
@@ -79,7 +84,7 @@ runs:
       with:
         github_token: ${{ github.token }}
         publish_dir: ./${{ env.TMP_PATH }}
-        destination_dir: ./${{ inputs.to }}
+        destination_dir: ./${{ inputs.environment_name }}
 
     - name: Update deployment status
       if: ${{ inputs.cloud_service == 'gh_pages' }}
@@ -89,11 +94,18 @@ runs:
         token: ${{ github.token }}
         status: ${{ job.status }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-        env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.to }}
+        env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.environment_name }}
 
     ##################
     # GCP
     ##################
+
+    # Sets the destination directory. It's inputs.to or (inputs.namespace/inputs.environment_name)
+    - name: Set the destination directory
+      shell: bash
+      run: |
+        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}")
+        echo "destination_dir=$to" >> $GITHUB_ENV
 
     - name: Authenticate with Google Cloud
       if: ${{ inputs.cloud_service == 'gcp' }}
@@ -112,7 +124,7 @@ runs:
       id: 'upload-file'
       with:
         path: ./${{ env.TMP_PATH }}
-        destination: '${{ inputs.cloud_bucket }}/${{ inputs.to }}'
+        destination: '${{ inputs.cloud_bucket }}/${{ env.destination_dir }}'
         parent: true
 
     - name: Update GCS deployment status
@@ -123,9 +135,9 @@ runs:
         token: ${{ inputs.github_token }}
         status: ${{ job.status }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-        env_url: https://${{ inputs.base_url }}/${{ inputs.to }}/index.html
+        env_url: https://${{ inputs.base_url }}/${{ env.destination_dir }}/index.html
 
     - name: Invalidate Cloud CDN
       if: ${{ inputs.cloud_service == 'gcp' }}
       shell: bash
-      run: gcloud compute url-maps invalidate-cdn-cache ${{ inputs.cloud_lb }} --path /${{ inputs.to }}/*
+      run: gcloud compute url-maps invalidate-cdn-cache ${{ inputs.cloud_lb }} --path /${{ env.destination_dir }}/*

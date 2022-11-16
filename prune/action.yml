@@ -7,15 +7,18 @@ description: 'Removes the deployment from the cloud service and disbles the envi
 # - Disables the Github Environment object
 # - Removes the directory in Github Pages
 inputs:
-  to:
-    description: 'Directory where the files are deployed'
+  namespace:  
+    description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
     required: true
     type: string
-  environment_name:
-    description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
+  environment_name:  
+    description: 'The environment name associated with the deployment.'
+    required: true
+    type: string
+  to:
+    description: 'Directory where the project are deployed. If not specified namespace/environment_name is used'
     required: false
     default: ''
-    type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: true
@@ -42,7 +45,7 @@ runs:
       with:
         step: deactivate-env
         token: ${{ inputs.github_token }}
-        env: ${{ inputs.environment_name || inputs.to }}
+        env: ${{ inputs.environment_name }}
         desc: PR for this branch was closed
 
     ##################
@@ -60,11 +63,18 @@ runs:
       with:
         github_token: ${{ inputs.github_token }}
         publish_dir: ./empty_dir
-        destination_dir: ./${{ inputs.to }}
+        destination_dir: ./${{ inputs.environment_name }}
 
     ##################
     # GCP
     ##################
+
+    # Sets the destination directory. It's inputs.to or (inputs.namespace/inputs.environment_name)
+    - name: Set the destination directory
+      shell: bash
+      run: |
+        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}")
+        echo "destination_dir=$to" >> $GITHUB_ENV
 
     - name: Authenticate with Google Cloud
       if: ${{ inputs.cloud_service == 'gcp' }}
@@ -80,4 +90,4 @@ runs:
     - name: Delete files from bucket
       if: ${{ inputs.cloud_service == 'gcp' }}
       shell: bash
-      run: gsutil rm -r gs://${{ inputs.cloud_bucket }}/${{ inputs.to }}
+      run: gsutil rm -r gs://${{ inputs.cloud_bucket }}/${{ env.destination_dir }}
