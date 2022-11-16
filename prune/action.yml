@@ -41,9 +41,9 @@ runs:
 
   steps:
     - name: Mark environment as deactivated
-      uses: bobheadxi/deployments@v0.4.3
+      uses: bobheadxi/deployments@v1.3.0
       with:
-        step: deactivate-env
+        step: delete-env
         token: ${{ inputs.github_token }}
         env: ${{ inputs.environment_name }}
         desc: PR for this branch was closed
