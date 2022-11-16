@@ -5,21 +5,25 @@ description: "Deploys an static application to a cloud service"
 # Steps:
 # - Creates a Github Deployment object with status "start" and the name
 # - Download an artifact from a previous step
-# - Deploy the files to the specified path (inputs.to) in Github Pages or GCS
+# - Deploy the files to the specified path ("namespace/environment_name" or "to") in Github Pages or GCS
 # - Marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
 inputs:
-  to:  
-    description: 'Directory where the project must be deployed to'
+  namespace:  
+    description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
     required: true
+    type: string
+  environment_name:  
+    description: 'The environment name to create a deployment.'
+    required: true
+    type: string
+  to:  
+    description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
+    required: false
+    default: ''
   artifact_name:
     description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
     default: build-output
-    type: string
-  environment_name:  
-    description: 'The environment name to create a deployment. If not specified, uses the value defined to "to"'
-    required: false
-    default: ''
     type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
@@ -74,7 +78,7 @@ runs:
       with:
         step: start
         token: ${{ inputs.github_token }}
-        env: ${{ inputs.environment_name || inputs.to }}
+        env: ${{ inputs.environment_name }}
         ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
     - name: Download artifact
@@ -93,7 +97,7 @@ runs:
       with:
         github_token: ${{ inputs.github_token }}
         publish_dir: ./${{ env.TMP_PATH }}
-        destination_dir: ./${{ inputs.to }}
+        destination_dir: ./${{ inputs.environment_name }}
 
     - name: Update deployment status
       if: ${{ inputs.cloud_service == 'gh_pages' }}
@@ -103,11 +107,17 @@ runs:
         token: ${{ inputs.github_token }}
         status: ${{ job.status }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-        env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.to }}
+        env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.environment_name }}
 
     ##################
     # GCP
     ##################
+
+    # Sets the destination directory. It's inputs.to or (inputs.namespace/inputs.environment_name)
+    - name: Set the destination directory
+      run: |
+        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}") >>
+        echo "destination_dir=$to" >> $GITHUB_ENV
     
     # Copies the current action's repository to the specified location, 
     # so other actions from the same repo may be called (see rsync below)
@@ -126,7 +136,7 @@ runs:
       if: ${{ inputs.cloud_service == 'gcp' }}
       uses: ./.github/actions/ConfigureID/gh-actions/rsync
       with:
-        to: '${{ inputs.to }}'
+        to: '${{ env.destination_dir }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
         cloud_credentials: '${{ inputs.cloud_credentials }}'
         allowed_destination: '${{ inputs.allowed_destination }}'
@@ -143,4 +153,4 @@ runs:
         token: ${{ inputs.github_token }}
         status: ${{ job.status }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-        env_url: https://${{ inputs.base_url }}/${{ inputs.to }}/index.html
+        env_url: https://${{ inputs.base_url }}/${{ env.destination_dir }}/index.html
