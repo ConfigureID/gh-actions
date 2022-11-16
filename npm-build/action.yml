@@ -13,7 +13,6 @@ description: 'Action that tests and builds an NPM Project'
 inputs:
   node_version:  
     description: 'Node.js version to use'
-    type: number
   node-version-file:  
     description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
     type: string
