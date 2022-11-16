@@ -27,7 +27,8 @@ inputs:
     type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
-    required: true
+    required: false
+    default: ${{ github.token }}
     type: string
   cloud_service:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'

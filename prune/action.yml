@@ -21,8 +21,9 @@ inputs:
     default: ''
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
-    required: true
     type: string
+    required: false
+    default: ${{ github.token }}
   cloud_service:
     description: 'Cloud Service to prune (supports GH Pages and GCP)'
     required: true

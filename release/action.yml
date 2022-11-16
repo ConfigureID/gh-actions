@@ -26,7 +26,8 @@ inputs:
     type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
-    required: true
+    required: false
+    default: ${{ github.token }}
 
 env:
   TMP_PATH: tmp

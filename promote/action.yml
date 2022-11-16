@@ -25,6 +25,10 @@ inputs:
     required: false
     default: ''
     type: string
+  github_token:
+    description: 'GitHub token with permissions to push to the gh-pages branch'
+    required: false
+    default: ${{ github.token }}
   cloud_service:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
     required: true
@@ -58,7 +62,7 @@ runs:
       id: deployment
       with:
         step: start
-        token: ${{ github.token }}
+        token: ${{ inputs.github_token }}
         env: ${{ inputs.environment_name }}
         ref: tags/${{ inputs.tag }}
 
@@ -67,7 +71,7 @@ runs:
       with:
         version: 'tags/${{ inputs.tag }}'
         file: ${{ inputs.release_filename }}
-        token: ${{ github.token }}
+        token: ${{ inputs.github_token }}
 
     - name: Unzip release
       uses: montudor/action-zip@v1
@@ -82,7 +86,7 @@ runs:
       if: ${{ inputs.cloud_service == 'gh_pages' }}
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ github.token }}
+        github_token: ${{ inputs.github_token }}
         publish_dir: ./${{ env.TMP_PATH }}
         destination_dir: ./${{ inputs.environment_name }}
 
@@ -91,7 +95,7 @@ runs:
       uses: bobheadxi/deployments@v1.3.0
       with:
         step: finish
-        token: ${{ github.token }}
+        token: ${{ inputs.github_token }}
         status: ${{ job.status }}
         env: ${{ steps.deployment.outputs.env }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
@@ -129,7 +133,7 @@ runs:
       uses: bobheadxi/deployments@v1.3.0
       with:
         step: finish
-        token: ${{ github.token }}
+        token: ${{ inputs.github_token }}
         status: ${{ job.status }}
         env: ${{ steps.deployment.outputs.env }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
