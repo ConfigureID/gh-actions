@@ -29,9 +29,6 @@ inputs:
     required: false
     default: ${{ github.token }}
 
-env:
-  TMP_PATH: tmp
-
 runs:
   using: "composite"
   steps:
@@ -39,13 +36,14 @@ runs:
       uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.artifact_name }}
-        path: ./${{ env.TMP_PATH }}
+        path: ./tmp
+
+    - name: Install zip
+      uses: montudor/action-zip@v1
 
     - name: Compress files
-      uses: vimtor/action-zip@v1
-      with:
-        files: ${{ env.TMP_PATH }}/
-        dest: ${{ inputs.release_filename }}.zip
+      run: zip -qq -r ../${{ inputs.release_filename }}.zip .
+      working-directory: ./tmp
 
     - name: Create Release
       uses: ncipollo/release-action@v1
