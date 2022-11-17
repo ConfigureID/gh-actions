@@ -54,17 +54,14 @@ inputs:
     description: 'Regex with the allowed destinations. Others will fail'
     required: false
     type: string
-    default: '[/]prod$|[/]staging$|[/]dev$|([/](branches|releases)[/][A-Za-z0-9._%+-\/]+$)'
   exclude:
     description: 'Regrex expression to exclude files'
     required: false
     type: string
-    default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
   delete:
     description: 'Delete extra files in the destination not found in the source'
     required: false
     type: bool
-    default: true
 
 runs:
   using: "composite"
@@ -86,7 +83,7 @@ runs:
         path: ./tmp
 
     # Copies the current action's repository to the specified location, 
-    # so other actions from the same repo may be called (see rsync below)
+    # so other actions from the same repo may be called (see sync below)
     # This allows us to use the same version of the action for both "deploy" (the current action) and rsync
     - name: Copy custom action repository
       shell: bash
