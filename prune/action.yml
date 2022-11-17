@@ -70,12 +70,16 @@ runs:
     # GCP
     ##################
 
-    # Sets the destination directory. It's inputs.to or (inputs.namespace/inputs.environment_name)
+    # Sets the destination directory to {{env.destination_dir}}.
+    # It's inputs.to or (inputs.namespace/inputs.environment_name)
     - name: Set the destination directory
+      if: ${{ inputs.cloud_service == 'gcp' }}
       shell: bash
-      run: |
-        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}")
-        echo "destination_dir=$to" >> $GITHUB_ENV
+      run: bash ${{ github.action_path }}/../scripts/set_destination.sh
+      env:
+        DESTINATION: ${{ inputs.to }}
+        NAMESPACE: ${{ inputs.namespace }}
+        ENVIRONMENT_NAME: ${{ inputs.environment_name }}
 
     - name: Authenticate with Google Cloud
       if: ${{ inputs.cloud_service == 'gcp' }}
