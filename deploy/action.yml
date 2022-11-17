@@ -19,7 +19,7 @@ inputs:
   to:  
     description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
     required: false
-    default: ${{ inputs.namespace }}/${{ inputs.environment_name }}
+    default: ''
   artifact_name:
     description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
