@@ -26,25 +26,25 @@ inputs:
     type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
-    required: true
-
-env:
-  TMP_PATH: tmp
+    required: false
+    default: ${{ github.token }}
 
 runs:
   using: "composite"
   steps:
     - name: Download artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.artifact_name }}
-        path: ./${{ env.TMP_PATH }}
+        path: ./tmp
+
+    - name: Install zip
+      uses: montudor/action-zip@v1
 
     - name: Compress files
-      uses: vimtor/action-zip@v1
-      with:
-        files: ${{ env.TMP_PATH }}/
-        dest: ${{ inputs.release_filename }}.zip
+      shell: bash
+      run: zip -qq -r ../${{ inputs.release_filename }}.zip .
+      working-directory: ./tmp
 
     - name: Create Release
       uses: ncipollo/release-action@v1

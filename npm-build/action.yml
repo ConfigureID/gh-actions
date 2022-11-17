@@ -13,8 +13,10 @@ description: 'Action that tests and builds an NPM Project'
 inputs:
   node_version:  
     description: 'Node.js version to use'
-    required: true
-    type: number
+  node-version-file:  
+    description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
+    type: string
+    default: '.node-version'
   dist_dir:
     description: 'Directory where the built project is located'
     required: true
@@ -33,14 +35,15 @@ runs:
   using: "composite"
   steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: ${{ inputs.source_ref }}
 
     - name: Install Node.js and Restore Cache
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node_version }}
+        node-version-file: ${{ inputs.node-version-file }}
         cache: "npm"
 
     - name: Install NPM packages
@@ -56,7 +59,7 @@ runs:
       shell: bash
 
     - name: Upload production-ready build files
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ inputs.artifact_name }}
         path: ./${{ inputs.dist_dir }}
