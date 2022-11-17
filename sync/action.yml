@@ -71,17 +71,6 @@ runs:
 
   steps:
 
-    - name: Set public URL
-      id: build-url
-      shell: bash
-      run: |
-        if [[ "${{ inputs.cloud_service }}" == "gcp" ]]; then
-            echo "url=https://${{ inputs.base_url }}/${{ env.destination_dir }}/index.html" >> $GITHUB_OUTPUT
-        fi
-        if [[ "${{ inputs.cloud_service }}" == "gh_pages" ]]; then
-            echo "url=https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.environment_name }}" >> $GITHUB_OUTPUT
-        fi
-        
     ##################
     # GH Pages
     ##################
@@ -134,3 +123,18 @@ runs:
         cache: ${{ inputs.cache }}
         delete: ${{ inputs.delete }}
 
+    ##################
+    # URL
+    ##################
+
+    - name: Set public URL
+      id: build-url
+      shell: bash
+      run: |
+        if [[ "${{ inputs.cloud_service }}" == "gcp" ]]; then
+            echo "url=https://${{ inputs.base_url }}/${{ env.destination_dir }}/index.html" >> $GITHUB_OUTPUT
+        fi
+        if [[ "${{ inputs.cloud_service }}" == "gh_pages" ]]; then
+            echo "url=https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.environment_name }}" >> $GITHUB_OUTPUT
+        fi
+        
