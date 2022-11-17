@@ -1,5 +1,5 @@
-name: Deploy
-description: "Deploys an static application to a cloud service"
+name: GCP Sync
+description: "Calls rsync on Google Cloud Storage"
 
 inputs:
   to:  

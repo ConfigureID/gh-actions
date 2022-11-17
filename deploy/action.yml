@@ -84,7 +84,7 @@ runs:
 
     # Copies the current action's repository to the specified location, 
     # so other actions from the same repo may be called (see sync below)
-    # This allows us to use the same version of the action for both "deploy" (the current action) and rsync
+    # This allows us to use the same version of the action for both "deploy" (the current action) and sync
     - name: Copy custom action repository
       shell: bash
       run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh

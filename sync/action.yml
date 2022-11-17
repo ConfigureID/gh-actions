@@ -106,8 +106,8 @@ runs:
         ENVIRONMENT_NAME: ${{ inputs.environment_name }}
  
     # Copies the current action's repository to the specified location, 
-    # so other actions from the same repo may be called (see rsync below)
-    # This allows us to use the same version of the action for both "deploy" (the current action) and rsync
+    # so other actions from the same repo may be called (see gcp-sync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and gcp-sync
     - name: Copy custom action repository
       if: ${{ inputs.cloud_service == 'gcp' }}
       shell: bash
@@ -116,10 +116,10 @@ runs:
         CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
         DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
-    # RSync to GCS
-    - name: RSync GCS
+    # Sync to GCS
+    - name: Sync to GCS
       if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: ./.github/actions/ConfigureID/gh-actions/rsync
+      uses: ./.github/actions/ConfigureID/gh-actions/gcp-sync
       with:
         to: '${{ env.destination_dir }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
