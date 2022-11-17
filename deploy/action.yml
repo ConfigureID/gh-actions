@@ -118,18 +118,18 @@ runs:
     # Sets the destination directory. It's inputs.to or (inputs.namespace/inputs.environment_name)
     - name: Set the destination directory
       shell: bash
-      run: |
-        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}")
-        echo "destination_dir=$to" >> $GITHUB_ENV
+      run: bash ${{ github.action_path }}/../scripts/set_destination.sh
+      env:
+        DESTINATION: ${{ inputs.to }}
+        NAMESPACE: ${{ inputs.namespace }}
+        ENVIRONMENT_NAME: ${{ inputs.environment_name }}
  
     # Copies the current action's repository to the specified location, 
     # so other actions from the same repo may be called (see rsync below)
     # This allows us to use the same version of the action for both "deploy" (the current action) and rsync
     - name: Copy custom action repository
       shell: bash
-      run: |
-        chmod +x ${{ github.action_path }}/copy_actions_repo.sh
-        ${{ github.action_path }}/copy_actions_repo.sh
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
       env:
         CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
         DESTINATION_PATH: ${{ github.workspace }}/.github/actions
