@@ -1,0 +1,27 @@
+name: GCP Run
+description: "Runs a bash script with gsutil and gcloud commands available and authenticated"
+
+inputs:
+  script:
+    description: 'The bash script to run'
+    required: true
+  cloud_credentials:
+    description: 'GCP Credentials'
+    required: true
+    type: string
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Authenticate with Google Cloud
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ inputs.cloud_credentials }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v1'
+
+    - name: Run Script with GCP 
+      shell: bash
+      run: ${{ inputs.script }}

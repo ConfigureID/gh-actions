@@ -107,7 +107,7 @@ runs:
  
     # Copies the current action's repository to the specified location, 
     # so other actions from the same repo may be called (see gcp-sync below)
-    # This allows us to use the same version of the action for both "deploy" (the current action) and gcp-sync
+    # This allows us to use the same version of the action for both "deploy" (the current action), gcp-sync and gcp-run
     - name: Copy custom action repository
       if: ${{ inputs.cloud_service == 'gcp' }}
       shell: bash
@@ -131,17 +131,12 @@ runs:
         delete: ${{ inputs.delete }}
 
     # Cache Invalidation
-    - name: Authenticate with Google Cloud
-      if: ${{ (inputs.cloud_service == 'gcp') && (inputs.cache == true) }}
-      uses: 'google-github-actions/auth@v1'
-      id: 'auth'
-      with:
-        credentials_json: '${{ inputs.cloud_credentials }}'
-
     - name: Invalidate Cloud CDN
       if: ${{ (inputs.cloud_service == 'gcp') && (inputs.cache == true) }}
-      shell: bash
-      run: gcloud compute url-maps invalidate-cdn-cache ${{ inputs.cloud_lb }} --path /${{ env.destination_dir }}/*
+      uses: ./.github/actions/ConfigureID/gh-actions/gcp-run
+      with:
+        credentials_json: '${{ inputs.cloud_credentials }}'
+        script: gcloud compute url-maps invalidate-cdn-cache ${{ inputs.cloud_lb }} --path /${{ env.destination_dir }}/*
 
     ##################
     # Action Output

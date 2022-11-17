@@ -81,18 +81,21 @@ runs:
         NAMESPACE: ${{ inputs.namespace }}
         ENVIRONMENT_NAME: ${{ inputs.environment_name }}
 
-    - name: Authenticate with Google Cloud
+    # Copies the current action's repository to the specified location, 
+    # so other actions from the same repo may be called (see gcp-run below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and gcp-run
+    - name: Copy custom action repository
       if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: 'google-github-actions/auth@v1'
-      id: 'auth'
-      with:
-        credentials_json: '${{ inputs.cloud_credentials }}'
-
-    - name: 'Set up Cloud SDK'
-      if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: 'google-github-actions/setup-gcloud@v1'
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
     - name: Delete files from bucket
       if: ${{ inputs.cloud_service == 'gcp' }}
-      shell: bash
-      run: gsutil rm -r gs://${{ inputs.cloud_bucket }}/${{ env.destination_dir }}
+      uses: ./.github/actions/ConfigureID/gh-actions/gcp-run
+      with:
+        credentials_json: '${{ inputs.cloud_credentials }}'
+        script: gsutil rm -r gs://${{ inputs.cloud_bucket }}/${{ env.destination_dir }}
+    
