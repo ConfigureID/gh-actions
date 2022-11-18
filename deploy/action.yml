@@ -11,11 +11,9 @@ inputs:
   namespace:  
     description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
     required: true
-    type: string
   environment_name:  
     description: 'The environment name to create a deployment.'
     required: true
-    type: string
   to:  
     description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
     required: false
@@ -24,44 +22,34 @@ inputs:
     description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
     default: build-output
-    type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: false
     default: ${{ github.token }}
-    type: string
   cloud_service:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
     required: true
-    type: string
   cloud_credentials:
     description: 'Credentials of the cloud service where the project will be deployed to'
     required: false
-    type: string
   cloud_bucket:
     description: 'Name of the Cloud service (eg. GCS) bucket'
     required: false
-    type: string
   base_url:
     description: 'Base URL where the deployment can be accessed'
     required: false
-    type: string
   cache:
     description: 'Enable or disable cache'
     required: true
-    type: bool
   allowed_destination:
     description: 'Regex with the allowed destinations. Others will fail'
     required: false
-    type: string
   exclude:
     description: 'Regrex expression to exclude files'
     required: false
-    type: string
   delete:
     description: 'Delete extra files in the destination not found in the source'
     required: false
-    type: bool
 
 runs:
   using: "composite"
@@ -110,6 +98,7 @@ runs:
         delete: ${{ inputs.delete }}
     
     - name: Update deployment status
+      if: always()
       uses: bobheadxi/deployments@v1.3.0
       with:
         step: finish
