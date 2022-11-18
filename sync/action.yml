@@ -120,7 +120,7 @@ runs:
 
     # Cache Invalidation
     - name: Invalidate Cloud CDN
-      if: ${{ (inputs.cloud_service == 'gcp') && (inputs.cache == true) }}
+      if: ${{ (inputs.cloud_service == 'gcp') && (inputs.cache == 'true') }}
       uses: ./.github/actions/ConfigureID/gh-actions/gcp-run
       with:
         credentials_json: '${{ inputs.cloud_credentials }}'
