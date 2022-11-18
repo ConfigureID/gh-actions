@@ -15,21 +15,17 @@ inputs:
     description: 'Node.js version to use'
   node-version-file:  
     description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
-    type: string
     default: '.node-version'
   dist_dir:
     description: 'Directory where the built project is located'
     required: true
-    type: string
   source_ref:
     description: 'The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)'
     required: false
-    type: string
   artifact_name:
     description: 'The name of the artifact to upload. Useful to download it on the next steps of the workflow. Default is build-output'
     required: false
     default: build-output
-    type: string
 
 runs:
   using: "composite"

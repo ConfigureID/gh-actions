@@ -10,32 +10,26 @@ inputs:
   namespace:  
     description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
     required: true
-    type: string
   environment_name:  
     description: 'The environment name associated with the deployment.'
     required: true
-    type: string
   to:
     description: 'Directory where the project are deployed. If not specified namespace/environment_name is used'
     required: false
     default: ''
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
-    type: string
     required: false
     default: ${{ github.token }}
   cloud_service:
     description: 'Cloud Service to prune (supports GH Pages and GCP)'
     required: true
-    type: string
   cloud_credentials:
     description: 'Credentials of the cloud service where the files will be pruned'
     required: false
-    type: string
   cloud_bucket:
     description: 'Name of the Cloud service (eg. GCS) bucket'
     required: false
-    type: string
 
 runs:
   using: "composite"
