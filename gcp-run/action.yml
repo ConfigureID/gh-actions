@@ -5,9 +5,25 @@ inputs:
   script:
     description: 'The bash script to run'
     required: true
-  cloud_credentials:
-    description: 'GCP Credentials'
-    required: true
+  workload_identity_provider:
+    description: |-
+      The full identifier of the Workload Identity Provider, including the
+      project number, pool name, and provider name. If provided, this must be
+      the full identifier which includes all parts, for example:
+      "projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider".
+      This is mutually exclusive with "credentials_json".
+    required: false
+  service_account:
+    description: |-
+      Email address or unique identifier of the Google Cloud service account for
+      which to generate credentials. This is required if
+      "workload_identity_provider" is specified.
+    required: false
+  credentials_json:
+    description: |-
+      The Google Cloud JSON service account key to use for authentication. This
+      is mutually exclusive with "workload_identity_provider".
+    required: false
 
 runs:
   using: "composite"
@@ -16,7 +32,7 @@ runs:
     - name: Authenticate with Google Cloud
       uses: 'google-github-actions/auth@v1'
       with:
-        credentials_json: '${{ inputs.cloud_credentials }}'
+        credentials_json: '${{ inputs.credentials_json }}'
 
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
