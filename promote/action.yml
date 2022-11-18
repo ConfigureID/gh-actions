@@ -7,24 +7,19 @@ inputs:
   tag:
     description: 'Release version tag'
     required: true
-    type: string
   release_filename:
     description: 'Name of the release file'
     required: true
-    type: string
   namespace:  
     description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
     required: true
-    type: string
   environment_name:  
     description: 'The environment name to create a deployment.'
     required: true
-    type: string
   to:
     description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
     required: false
     default: ''
-    type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: false
@@ -32,40 +27,34 @@ inputs:
   cloud_service:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
     required: true
-    type: string
   cloud_credentials:
     description: 'Credentials of the cloud service where the release will be promoted to'
     required: false
-    type: string
   cloud_bucket:
     description: 'Name of the Cloud service (eg. GCS) bucket'
     required: false
-    type: string
   base_url:
     description: 'Base URL where the deployment can be accessed'
     required: false
-    type: string
   cache:
     description: 'Enable or disable cache'
     required: false
-    type: bool
-    default: true
+    default: 'true'
   allowed_destination:
     description: 'Regex with the allowed destinations. Others will fail'
     required: false
-    type: string
+    default: '[/]prod$|[/]staging$|[/]dev$|([/](branches|releases)[/][A-Za-z0-9._%+-\/]+$)'
   exclude:
     description: 'Regrex expression to exclude files'
     required: false
-    type: string
+    default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
   delete:
     description: 'Delete extra files in the destination not found in the source'
     required: false
-    type: bool
+    default: 'true'
   cloud_lb:
     description: 'Load Balancer Name'
     required: false
-    type: string
 
 runs:
   using: "composite"
