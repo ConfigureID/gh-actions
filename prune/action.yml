@@ -35,14 +35,7 @@ runs:
   using: "composite"
 
   steps:
-    - name: Mark environment as deactivated
-      uses: bobheadxi/deployments@v1.3.0
-      with:
-        step: delete-env
-        token: ${{ inputs.github_token }}
-        env: ${{ inputs.environment_name }}
-        desc: PR for this branch was closed
-
+  
     ##################
     # GH Pages
     ##################
@@ -93,3 +86,15 @@ runs:
         credentials_json: '${{ inputs.cloud_credentials }}'
         script: gsutil rm -r gs://${{ inputs.cloud_bucket }}/${{ env.destination_dir }}
     
+
+    ##################
+    # Remove env
+    ##################
+
+    - name: Remove environment
+      uses: bobheadxi/deployments@v1.3.0
+      with:
+        step: delete-env
+        token: ${{ inputs.github_token }}
+        env: ${{ inputs.environment_name }}
+        desc: PR for this branch was closed
