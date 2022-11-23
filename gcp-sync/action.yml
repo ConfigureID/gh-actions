@@ -1,5 +1,5 @@
-name: Deploy
-description: "Deploys an static application to a cloud service"
+name: GCP Sync
+description: "Calls rsync on Google Cloud Storage"
 
 inputs:
   to:  
@@ -8,32 +8,25 @@ inputs:
   cloud_credentials:
     description: 'Credentials of the cloud service where the project will be deployed to'
     required: false
-    type: string
   cloud_bucket:
     description: 'Name of the Cloud service (eg. GCS) bucket'
     required: false
-    type: string
   cache:
     description: 'Enable or disable cache'
     required: true
-    type: bool
   allowed_destination:
     description: 'Check the destination'
     required: true
-    type: string
     default: ''
   exclude:
     description: 'Regrex expression to exclude files'
     required: true
-    type: string
   path:
     description: 'PATH where the static files are located'
     required: true
-    type: string
   delete:
     description: 'Delete extra files in the destination not found in the source'
     required: true
-    type: bool
 
 runs:
   using: docker

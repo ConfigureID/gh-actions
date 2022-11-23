@@ -1,0 +1,145 @@
+name: Sync
+description: "Syncs the assets to a cloud service"
+
+# Action to sync the project files to a Cloud Service (supports Github Pages and GCS)
+# Steps:
+# - Deploy the files to the specified path ("namespace/environment_name" or "to") in Github Pages or GCS
+inputs:
+  source_dir:
+    description: 'The source directory to sync'
+    required: true
+  namespace:  
+    description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
+    required: true
+  environment_name:  
+    description: 'The environment name to create a deployment.'
+    required: true
+  to:  
+    description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
+    required: false
+    default: ''
+  github_token:
+    description: 'GitHub token with permissions to push to the gh-pages branch'
+    required: false
+    default: ${{ github.token }}
+  cloud_service:
+    description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
+    required: true
+  cloud_credentials:
+    description: 'Credentials of the cloud service where the project will be deployed to'
+    required: false
+  cloud_bucket:
+    description: 'Name of the Cloud service (eg. GCS) bucket'
+    required: false
+  cloud_lb:
+    description: 'Load Balancer Name'
+    required: false
+  base_url:
+    description: 'Base URL where the deployment can be accessed'
+    required: false
+  cache:
+    description: 'Enable or disable cache'
+    required: true
+  allowed_destination:
+    description: 'Regex with the allowed destinations. Others will fail'
+    required: false
+    default: '[/]prod$|[/]staging$|[/]dev$|([/](branches|releases)[/][A-Za-z0-9._%+-\/]+$)'
+  exclude:
+    description: 'Regrex expression to exclude files'
+    required: false
+    default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
+  delete:
+    description: 'Delete extra files in the destination not found in the source'
+    required: false
+    default: 'true'
+
+outputs:
+  url:
+    value: ${{ steps.build-output.outputs.url }}
+    description: 'The public URL where the assets are served'
+  destination_dir:
+    value: ${{ steps.build-output.outputs.destination_dir }}
+    description: 'The sync destination directory'
+
+runs:
+  using: "composite"
+
+  steps:
+
+    ##################
+    # GH Pages
+    ##################
+    
+    - name: Deploy to gh-pages
+      if: ${{ inputs.cloud_service == 'gh_pages' }}
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ inputs.github_token }}
+        publish_dir: ./${{ inputs.source_dir }}
+        destination_dir: ./${{ inputs.environment_name }}
+
+    ##################
+    # GCP
+    ##################
+
+    # Sets the destination directory to {{env.destination_dir}}.
+    # It's inputs.to or (inputs.namespace/inputs.environment_name)
+    - name: Set the destination directory
+      if: ${{ inputs.cloud_service == 'gcp' }}
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/set_destination.sh
+      env:
+        DESTINATION: ${{ inputs.to }}
+        NAMESPACE: ${{ inputs.namespace }}
+        ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+ 
+    # Copies the current action's repository to the specified location, 
+    # so other actions from the same repo may be called (see gcp-sync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action), gcp-sync and gcp-run
+    - name: Copy custom action repository
+      if: ${{ inputs.cloud_service == 'gcp' }}
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
+    # Sync to GCS
+    - name: Sync to GCS
+      if: ${{ inputs.cloud_service == 'gcp' }}
+      uses: ./.github/actions/ConfigureID/gh-actions/gcp-sync
+      with:
+        to: '${{ env.destination_dir }}'
+        cloud_bucket: '${{ inputs.cloud_bucket }}'
+        cloud_credentials: '${{ inputs.cloud_credentials }}'
+        allowed_destination: '${{ inputs.allowed_destination }}'
+        path: ./${{ inputs.source_dir }}            
+        exclude: '${{ inputs.exclude }}'
+        cache: ${{ inputs.cache }}
+        delete: ${{ inputs.delete }}
+
+    # Cache Invalidation
+    - name: Invalidate Cloud CDN
+      if: (inputs.cloud_service == 'gcp' && inputs.cache == 'true')
+      uses: ./.github/actions/ConfigureID/gh-actions/gcp-run
+      with:
+        credentials_json: '${{ inputs.cloud_credentials }}'
+        script: gcloud compute url-maps invalidate-cdn-cache ${{ inputs.cloud_lb }} --path /${{ env.destination_dir }}/*
+
+    ##################
+    # Action Output
+    ##################
+
+    - name: Set output variables 
+      id: build-output
+      shell: bash
+      run: |
+        if [[ "${{ inputs.cloud_service }}" == "gcp" ]]; then
+            echo "url=https://${{ inputs.base_url }}/${{ env.destination_dir }}/index.html" >> $GITHUB_OUTPUT
+            echo "destination_dir=${{ env.destination_dir }}" >> $GITHUB_OUTPUT
+        fi
+        if [[ "${{ inputs.cloud_service }}" == "gh_pages" ]]; then
+            echo "url=https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.environment_name }}" >> $GITHUB_OUTPUT
+            echo "destination_dir=${{ inputs.environment_name }}" >> $GITHUB_OUTPUT
+        fi
+        

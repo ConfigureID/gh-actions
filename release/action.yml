@@ -23,7 +23,6 @@ inputs:
     description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
     default: build-output
-    type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: false

@@ -7,24 +7,19 @@ inputs:
   tag:
     description: 'Release version tag'
     required: true
-    type: string
   release_filename:
     description: 'Name of the release file'
     required: true
-    type: string
   namespace:  
     description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
     required: true
-    type: string
   environment_name:  
     description: 'The environment name to create a deployment.'
     required: true
-    type: string
   to:
     description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
     required: false
     default: ''
-    type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: false
@@ -32,26 +27,34 @@ inputs:
   cloud_service:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
     required: true
-    type: string
   cloud_credentials:
     description: 'Credentials of the cloud service where the release will be promoted to'
     required: false
-    type: string
   cloud_bucket:
     description: 'Name of the Cloud service (eg. GCS) bucket'
     required: false
-    type: string
   base_url:
     description: 'Base URL where the deployment can be accessed'
     required: false
-    type: string
+  cache:
+    description: 'Enable or disable cache'
+    required: false
+    default: 'true'
+  allowed_destination:
+    description: 'Regex with the allowed destinations. Others will fail'
+    required: false
+    default: '[/]prod$|[/]staging$|[/]dev$|([/](branches|releases)[/][A-Za-z0-9._%+-\/]+$)'
+  exclude:
+    description: 'Regrex expression to exclude files'
+    required: false
+    default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
+  delete:
+    description: 'Delete extra files in the destination not found in the source'
+    required: false
+    default: 'true'
   cloud_lb:
     description: 'Load Balancer Name'
     required: false
-    type: string
-
-env:
-  TMP_PATH: tmp
 
 runs:
   using: "composite"
@@ -76,22 +79,38 @@ runs:
     - name: Unzip release
       uses: montudor/action-zip@v1
       with:
-        args: unzip -qq ${{ inputs.release_filename }} -d ./${{ env.TMP_PATH }}
+        args: unzip -qq ${{ inputs.release_filename }} -d ./tmp
 
-    ##################
-    # GH Pages
-    ##################
+    # Copies the current action's repository to the specified location, 
+    # so other actions from the same repo may be called (see sync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and sync
+    - name: Copy custom action repository
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
-    - name: Deploy to gh-pages
-      if: ${{ inputs.cloud_service == 'gh_pages' }}
-      uses: peaceiris/actions-gh-pages@v3
+    # Sync to Cloud Service
+    - name: Sync to Cloud Service
+      id: sync
+      uses: ./.github/actions/ConfigureID/gh-actions/sync
       with:
-        github_token: ${{ inputs.github_token }}
-        publish_dir: ./${{ env.TMP_PATH }}
-        destination_dir: ./${{ inputs.environment_name }}
+        source_dir: tmp
+        namespace: ${{ inputs.namespace }}
+        environment_name: ${{ inputs.environment_name }}
+        base_url: ${{ inputs.base_url }}
+        cloud_service: '${{ inputs.cloud_service }}'
+        cloud_bucket: '${{ inputs.cloud_bucket }}'
+        cloud_credentials: '${{ inputs.cloud_credentials }}'
+        cloud_lb: '${{ inputs.cloud_lb }}'
+        allowed_destination: '${{ inputs.allowed_destination }}'
+        exclude: '${{ inputs.exclude }}'
+        cache: ${{ inputs.cache }}
+        delete: ${{ inputs.delete }}
 
     - name: Update deployment status
-      if: ${{ inputs.cloud_service == 'gh_pages' }}
+      if: always()
       uses: bobheadxi/deployments@v1.3.0
       with:
         step: finish
@@ -99,47 +118,4 @@ runs:
         status: ${{ job.status }}
         env: ${{ steps.deployment.outputs.env }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-        env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.environment_name }}
-
-    ##################
-    # GCP
-    ##################
-
-    # Sets the destination directory. It's inputs.to or (inputs.namespace/inputs.environment_name)
-    - name: Set the destination directory
-      shell: bash
-      run: |
-        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}")
-        echo "destination_dir=$to" >> $GITHUB_ENV
-
-    - name: Authenticate with Google Cloud
-      if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: 'google-github-actions/auth@v1'
-      id: 'auth'
-      with:
-        credentials_json: '${{ inputs.cloud_credentials }}'
-
-    - name: Deploy to GCP Bucket
-      if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: 'google-github-actions/upload-cloud-storage@v0'
-      id: 'upload-file'
-      with:
-        path: ./${{ env.TMP_PATH }}
-        destination: '${{ inputs.cloud_bucket }}/${{ env.destination_dir }}'
-        parent: true
-
-    - name: Update GCS deployment status
-      if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: bobheadxi/deployments@v1.3.0
-      with:
-        step: finish
-        token: ${{ inputs.github_token }}
-        status: ${{ job.status }}
-        env: ${{ steps.deployment.outputs.env }}
-        deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-        env_url: https://${{ inputs.base_url }}/${{ env.destination_dir }}/index.html
-
-    - name: Invalidate Cloud CDN
-      if: ${{ inputs.cloud_service == 'gcp' }}
-      shell: bash
-      run: gcloud compute url-maps invalidate-cdn-cache ${{ inputs.cloud_lb }} --path /${{ env.destination_dir }}/*
+        env_url: ${{ steps.sync.outputs.url }}

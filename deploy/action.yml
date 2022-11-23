@@ -11,11 +11,9 @@ inputs:
   namespace:  
     description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
     required: true
-    type: string
   environment_name:  
     description: 'The environment name to create a deployment.'
     required: true
-    type: string
   to:  
     description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
     required: false
@@ -24,50 +22,37 @@ inputs:
     description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
     default: build-output
-    type: string
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: false
     default: ${{ github.token }}
-    type: string
   cloud_service:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
     required: true
-    type: string
   cloud_credentials:
     description: 'Credentials of the cloud service where the project will be deployed to'
     required: false
-    type: string
   cloud_bucket:
     description: 'Name of the Cloud service (eg. GCS) bucket'
     required: false
-    type: string
   base_url:
     description: 'Base URL where the deployment can be accessed'
     required: false
-    type: string
   cache:
     description: 'Enable or disable cache'
     required: true
-    type: bool
   allowed_destination:
     description: 'Regex with the allowed destinations. Others will fail'
     required: false
-    type: string
     default: '[/]prod$|[/]staging$|[/]dev$|([/](branches|releases)[/][A-Za-z0-9._%+-\/]+$)'
   exclude:
     description: 'Regrex expression to exclude files'
     required: false
-    type: string
     default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
   delete:
     description: 'Delete extra files in the destination not found in the source'
     required: false
-    type: bool
-    default: true
-
-env:
-  TMP_PATH: tmp
+    default: 'true'
 
 runs:
   using: "composite"
@@ -86,70 +71,37 @@ runs:
       uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.artifact_name }}
-        path: ./${{ env.TMP_PATH }}
+        path: ./tmp
 
-    ##################
-    # GH Pages
-    ##################
-    
-    - name: Deploy to gh-pages
-      if: ${{ inputs.cloud_service == 'gh_pages' }}
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ inputs.github_token }}
-        publish_dir: ./${{ env.TMP_PATH }}
-        destination_dir: ./${{ inputs.environment_name }}
-
-    - name: Update deployment status
-      if: ${{ inputs.cloud_service == 'gh_pages' }}
-      uses: bobheadxi/deployments@v1.3.0
-      with:
-        step: finish
-        token: ${{ inputs.github_token }}
-        status: ${{ job.status }}
-        env: ${{ steps.deployment.outputs.env }}
-        deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-        env_url: https://${{ github.event.repository.owner.login }}.github.io/${{ github.event.repository.name }}/${{ inputs.environment_name }}
-
-    ##################
-    # GCP
-    ##################
-
-    # Sets the destination directory. It's inputs.to or (inputs.namespace/inputs.environment_name)
-    - name: Set the destination directory
-      shell: bash
-      run: |
-        to=$([ "${{ inputs.to }}" == "" ] && echo "${{ inputs.namespace }}/${{ inputs.environment_name }}" || echo "${{ inputs.to }}")
-        echo "destination_dir=$to" >> $GITHUB_ENV
- 
     # Copies the current action's repository to the specified location, 
-    # so other actions from the same repo may be called (see rsync below)
-    # This allows us to use the same version of the action for both "deploy" (the current action) and rsync
+    # so other actions from the same repo may be called (see sync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and sync
     - name: Copy custom action repository
       shell: bash
-      run: |
-        chmod +x ${{ github.action_path }}/copy_actions_repo.sh
-        ${{ github.action_path }}/copy_actions_repo.sh
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
       env:
         CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
         DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
-    # Rsync to GCS
-    - name: Rsync GCS
-      if: ${{ inputs.cloud_service == 'gcp' }}
-      uses: ./.github/actions/ConfigureID/gh-actions/rsync
+    # Sync to Cloud Service
+    - name: Sync to Cloud Service
+      id: sync
+      uses: ./.github/actions/ConfigureID/gh-actions/sync
       with:
-        to: '${{ env.destination_dir }}'
+        source_dir: tmp
+        namespace: ${{ inputs.namespace }}
+        environment_name: ${{ inputs.environment_name }}
+        base_url: ${{ inputs.base_url }}
+        cloud_service: '${{ inputs.cloud_service }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
         cloud_credentials: '${{ inputs.cloud_credentials }}'
         allowed_destination: '${{ inputs.allowed_destination }}'
-        path: ./${{ env.TMP_PATH }}              
         exclude: '${{ inputs.exclude }}'
         cache: ${{ inputs.cache }}
         delete: ${{ inputs.delete }}
-
-    - name: Update GCS deployment status
-      if: ${{ inputs.cloud_service == 'gcp' }}
+    
+    - name: Update deployment status
+      if: always()
       uses: bobheadxi/deployments@v1.3.0
       with:
         step: finish
@@ -157,4 +109,4 @@ runs:
         status: ${{ job.status }}
         env: ${{ steps.deployment.outputs.env }}
         deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-        env_url: https://${{ inputs.base_url }}/${{ env.destination_dir }}/index.html
+        env_url: ${{ steps.sync.outputs.url }}
