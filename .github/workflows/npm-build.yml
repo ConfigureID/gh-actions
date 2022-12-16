@@ -12,7 +12,6 @@ on:
   workflow_call:
     secrets:
       NPM_TOKEN:
-        type: string
         required: false
     inputs:
       node_version:  
