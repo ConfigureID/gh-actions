@@ -10,6 +10,10 @@ name: NPM Build
 # - Uploads the artifact so the next steps can use it
 on:
   workflow_call:
+    secrets:
+      NPM_TOKEN:
+        type: string
+        required: false
     inputs:
       node_version:  
         description: 'Node.js version to use'
@@ -18,9 +22,6 @@ on:
         description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
         type: string
         default: '.node-version'
-      npm_token:
-        type: string
-        required: false
       dist_dir:
         description: 'Directory where the built project is located'
         required: true
@@ -57,7 +58,7 @@ jobs:
         run: npm ci --ignore-scripts
         shell: bash
         env:
-          NODE_AUTH_TOKEN: ${{ inputs.npm_token }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         
       - name: Run tests
         run: npm run test
