@@ -44,6 +44,7 @@ runs:
         node-version: ${{ inputs.node_version }}
         node-version-file: ${{ inputs.node-version-file }}
         cache: "npm"
+        registry-url: "https://registry.npmjs.org"
 
     - name: Install NPM packages
       # Skip post-install scripts here, as a malicious script could steal NODE_AUTH_TOKEN.
