@@ -16,6 +16,9 @@ inputs:
   node-version-file:  
     description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
     default: '.node-version'
+  npm_token:
+    type: string
+    required: false
   dist_dir:
     description: 'Directory where the built project is located'
     required: true
@@ -41,10 +44,13 @@ runs:
         node-version: ${{ inputs.node_version }}
         node-version-file: ${{ inputs.node-version-file }}
         cache: "npm"
+        registry-url: "https://registry.npmjs.org"
 
     - name: Install NPM packages
       run: npm ci
       shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.npm_token }}
       
     - name: Run tests
       run: npm run test

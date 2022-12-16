@@ -10,6 +10,9 @@ name: NPM Build
 # - Uploads the artifact so the next steps can use it
 on:
   workflow_call:
+    secrets:
+      NPM_TOKEN:
+        required: false
     inputs:
       node_version:  
         description: 'Node.js version to use'
@@ -48,10 +51,13 @@ jobs:
           node-version: ${{ inputs.node_version }}
           node-version-file: ${{ inputs.node-version-file }}
           cache: "npm"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install NPM packages
         run: npm ci
         shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         
       - name: Run tests
         run: npm run test
