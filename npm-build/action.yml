@@ -47,8 +47,7 @@ runs:
         registry-url: "https://registry.npmjs.org"
 
     - name: Install NPM packages
-      # Skip post-install scripts here, as a malicious script could steal NODE_AUTH_TOKEN.
-      run: npm ci --ignore-scripts
+      run: npm ci
       shell: bash
       env:
         NODE_AUTH_TOKEN: ${{ inputs.npm_token }}
