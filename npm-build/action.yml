@@ -16,6 +16,9 @@ inputs:
   node-version-file:  
     description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
     default: '.node-version'
+  npm_token:
+    type: string
+    required: false
   dist_dir:
     description: 'Directory where the built project is located'
     required: true
@@ -47,7 +50,7 @@ runs:
       run: npm ci --ignore-scripts
       shell: bash
       env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        NODE_AUTH_TOKEN: ${{ inputs.npm_token }}
       
     - name: Run tests
       run: npm run test
