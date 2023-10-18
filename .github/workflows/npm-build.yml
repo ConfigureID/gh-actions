@@ -34,6 +34,16 @@ on:
         required: false
         default: build-output
         type: string
+      test:
+        description: 'Indicates if npm run test should be called before the build command'
+        required: false
+        default: true
+        type: boolean
+      npm_script:
+        description: 'Script to run from package.json. Defaults to build'
+        required: false
+        default: build
+        type: string
 
 jobs:
   build:
@@ -60,11 +70,12 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         
       - name: Run tests
+        if: ${{ inputs.test == true }}
         run: npm run test
         shell: bash
 
       - name: Build project
-        run: npm run build
+        run: npm run ${{ inputs.npm_script }}
         shell: bash
 
       - name: Upload production-ready build files
