@@ -53,6 +53,9 @@ inputs:
     description: 'Delete extra files in the destination not found in the source'
     required: false
     default: 'true'
+  cloud_lb:
+    description: 'Load Balancer Name'
+    required: false
 
 runs:
   using: "composite"
@@ -95,6 +98,7 @@ runs:
         cloud_service: '${{ inputs.cloud_service }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
         cloud_credentials: '${{ inputs.cloud_credentials }}'
+        cloud_lb: '${{ inputs.cloud_lb }}'
         allowed_destination: '${{ inputs.allowed_destination }}'
         exclude: '${{ inputs.exclude }}'
         cache: ${{ inputs.cache }}
