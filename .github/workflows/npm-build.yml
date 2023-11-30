@@ -96,7 +96,7 @@ jobs:
           retention-days: 1
 
       - name: Upload test results
-        if: ${{ inputs.test == true }}
+        if: ${{ always() && inputs.test == true }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ inputs.test_name == '' && 'test-output-unit' || format('test-output-unit-{0}', inputs.test_name) }}
