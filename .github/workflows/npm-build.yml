@@ -101,7 +101,7 @@ jobs:
         with:
           name: ${{ inputs.test_name == '' && 'test-output-unit' || format('test-output-unit-{0}', inputs.test_name) }}
           path: |
-            "${{ inputs.test_results_pattern }}"
-            "**/${{ inputs.test_results_pattern }}"
+            ${{ inputs.test_results_pattern }}
+            **/${{ inputs.test_results_pattern }}
           if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
           retention-days: 1
