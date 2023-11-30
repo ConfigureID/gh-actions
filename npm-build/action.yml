@@ -17,7 +17,6 @@ inputs:
     description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
     default: '.node-version'
   npm_token:
-    type: string
     required: false
   dist_dir:
     description: 'Directory where the built project is located'
@@ -29,6 +28,22 @@ inputs:
     description: 'The name of the artifact to upload. Useful to download it on the next steps of the workflow. Default is build-output'
     required: false
     default: build-output
+  test:
+    description: 'Indicates if npm run test should be called before the build command'
+    required: false
+    default: 'true'
+  test_name:
+    description: 'Name of the app/lib is being tested, in case multiple Unit/Component tests are run. It will be added to the artifact name'
+    required: false
+    default: ''
+  test_results_pattern:
+    description: 'Pattern to use to find the test reports and upload them'
+    required: false
+    default: tmp/test-results.*
+  npm_script:
+    description: 'Script to run from package.json. Defaults to build'
+    required: false
+    default: build
 
 runs:
   using: "composite"
@@ -53,11 +68,12 @@ runs:
         NODE_AUTH_TOKEN: ${{ inputs.npm_token }}
       
     - name: Run tests
+      if: ${{ inputs.test == "true" }}
       run: npm run test
       shell: bash
 
     - name: Build project
-      run: npm run build
+      run: npm run ${{ inputs.npm_script }}
       shell: bash
 
     - name: Upload production-ready build files
@@ -65,4 +81,15 @@ runs:
       with:
         name: ${{ inputs.artifact_name }}
         path: ./${{ inputs.dist_dir }}
+        retention-days: 1
+
+    - name: Upload test results
+      if: ${{ always() && inputs.test == "true" }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.test_name == '' && 'test-output-unit' || format('test-output-unit-{0}', inputs.test_name) }}
+        path: |
+          ${{ inputs.test_results_pattern }}
+          **/${{ inputs.test_results_pattern }}
+        if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
         retention-days: 1

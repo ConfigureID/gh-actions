@@ -1,0 +1,43 @@
+name: Publish Tests Reports
+description: "Process test reports to generate a summary and comments in the PR"
+
+# Action to process test results and  publish a report
+#
+# It will be generated in the Action summary and as comments in the PR.
+# It requires that the artifacts names use the specified prefix and "-unit" or "-e2e"
+#
+# Steps:
+# - Download the test artifacts
+# - Publish unit/component tests results (if available)
+# - Publish E2E tests results (if available)
+inputs:
+    artifact_prefix:  
+      description: 'Test output artifact prefix. Defaults to test-output'
+      default: test-output
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        path: tmp
+
+    - name: Publish Unit/Component Test Results 
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        check_name: Unit/Component Test Results
+        files: |
+          tmp/${{ inputs.artifact_prefix }}-unit*/**/*.xml
+          tmp/${{ inputs.artifact_prefix }}-unit*/**/*.json
+
+    - name: Publish E2E Test Results 
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        check_name: E2E Test Results
+        files: |
+          tmp/${{ inputs.artifact_prefix }}-e2e*/**/*.xml
+          tmp/${{ inputs.artifact_prefix }}-e2e*/**/*.json
+
+    
