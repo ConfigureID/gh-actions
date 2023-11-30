@@ -103,6 +103,5 @@ jobs:
           path: |
             "${{ inputs.test_results_pattern }}"
             "**/${{ inputs.test_results_pattern }}"
-          path: "**/tmp/test-results-*.*"
           if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
           retention-days: 1
