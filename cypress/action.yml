@@ -1,5 +1,5 @@
 name: Cypress E2E Test
-description: "Runs local/remote end to end test using Cypress"
+description: "Runs local/remote end to end test using Cypress and uploads the results as artifacts"
 
 # Action to run E2E Tests using Cypress.
 # It will run the test on a remote application if the URL parameter is set. 

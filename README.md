@@ -243,3 +243,110 @@ jobs:
        - name: Something after
          ...
 ```
+
+### Run E2E Tests using Cypress
+
+> Runs local/remote end to end test using Cypress and uploads the results as artifacts
+
+See contents [here](cypress/action.yml).
+
+If a `base_url` is defined, it will be tested remotely. If not, the built artifact will be downloaded and a local server will be started.
+
+- For the remote version, ensure to mark `deploy` as a job dependency
+- For the local version, ensure to mark `build` as a job dependency and use the right artifact. 
+  Also, the right `serve_command` must be configured on the project (defaults to `npm run cypress:serve`)
+
+**Steps**
+- Checkout the repo
+- Install the specified Node.js version and restores the node_modules cache if it exists
+- Install dependencies (npm ci), in order to setup Cypress
+- If local run, download the bundle artifact
+- Run Cypress tests (either with the local server or remote)
+- Upload videos if available
+- Upload snapshots on failure if available
+- Upload tests results (junit xml format)
+
+**Usage - Remote**
+```yaml
+jobs:
+  e2e-remote:
+    name: E2E Tests - Remote (GCP)
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: Extract branch or tag name
+        uses: tj-actions/branch-names@v6
+        id: extract_branch
+      
+      - name: E2E Test
+        uses: ConfigureID/gh-actions/cypress@v15
+        with:
+          # Test on the branch deployment on GCP
+          base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, steps.extract_branch.outputs.current_branch) }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+       - name: Something after
+         ...
+```
+
+**Usage - Local**
+```yaml
+jobs:
+  e2e-local:
+    name: E2E Tests - Local
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: E2E Test
+        uses: ConfigureID/gh-actions/cypress@v15
+        with:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+       - name: Something after
+         ...
+```
+
+### Generate and publish Test reports
+
+> Process test reports to generate a summary and comments in the PR
+
+See contents [here](test-report/action.yml).
+
+It will be generated in the Action summary and as comments in the PR.
+
+It requires that the artifacts names use the specified prefix and "-unit" or "-e2e"
+
+Add the `if:` condition to make it run `always()`, even on failure.
+
+**The job needs to have the permissions described in the example below or it will fail**
+
+**Steps**
+- Download the test artifacts
+- Publish unit/component tests results (if available)
+- Publish E2E tests results (if available)
+
+**Usage - Remote**
+```yaml
+jobs:
+   test-reports:
+    name: Create test reports
+    needs: [build, e2e-remote]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    # Required to generate reports in the PR
+    permissions:
+      contents: read
+      issues: read
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: Create reports
+        uses: ConfigureID/gh-actions/test-report@v15
+
+
+       - name: Something after
+         ...
+```
