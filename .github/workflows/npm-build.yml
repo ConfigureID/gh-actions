@@ -40,7 +40,7 @@ on:
         default: true
         type: boolean
       test_name:
-        description: 'Name of the app/lib is being tested, in case multiple Unit/Component tests are run'
+        description: 'Name of the app/lib is being tested, in case multiple Unit/Component tests are run. It will be added to the artifact name'
         required: false
         type: string
         default: ''
