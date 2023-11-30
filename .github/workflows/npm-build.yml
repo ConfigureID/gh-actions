@@ -42,10 +42,12 @@ on:
       test_name:
         description: 'Name of the app/lib is being tested, in case multiple Unit/Component tests are run'
         required: false
+        type: string
         default: ''
       test_results_pattern:
         description: 'Pattern to use to find the test reports and upload them'
         required: false
+        type: string
         default: tmp/test-results-*.*
       npm_script:
         description: 'Script to run from package.json. Defaults to build'
