@@ -39,6 +39,14 @@ on:
         required: false
         default: true
         type: boolean
+      test_name:
+        description: 'Name of the app/lib is being tested, in case multiple Unit/Component tests are run'
+        required: false
+        default: ''
+      test_results_pattern:
+        description: 'Pattern to use to find the test reports and upload them'
+        required: false
+        default: tmp/test-results-*.*
       npm_script:
         description: 'Script to run from package.json. Defaults to build'
         required: false
@@ -83,4 +91,16 @@ jobs:
         with:
           name: ${{ inputs.artifact_name }}
           path: ./${{ inputs.dist_dir }}
+          retention-days: 1
+
+      - name: Upload test results
+        if: ${{ inputs.test == true }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ inputs.test_name == '' && 'test-output-unit' || format('test-output-unit-{0}', inputs.test_name) }}
+          path: |
+            "${{ inputs.test_results_pattern }}"
+            "**/${{ inputs.test_results_pattern }}"
+          path: "**/tmp/test-results-*.*"
+          if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
           retention-days: 1
