@@ -29,11 +29,10 @@ outputs:
 runs:
   using: "composite"
   steps:
-      # Copies the current action's repository to the specified location, 
+    # Copies the current action's repository to the specified location, 
     # so other actions from the same repo may be called (see get-remote-json-property)
     # This allows us to use the same version of the action for both "deploy" (the current action) and get-remote-json-property
     - name: Copy custom action repository
-      if: ${{ inputs.cloud_service == 'gcp' }}
       shell: bash
       run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
       env:
