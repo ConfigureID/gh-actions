@@ -485,7 +485,7 @@ jobs:
         ...
 
       - name: Upload artifact as release asset
-        uses: ConfigureID/gh-actions/upload-release-artifact@v16
+        uses: ConfigureID/gh-actions/attach-release-artifact@v16
         with:
           release_name: v1.4.3
           filename: imp-adidas-v1.4.3
