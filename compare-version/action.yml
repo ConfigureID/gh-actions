@@ -1,0 +1,70 @@
+name: 'Compares an specified version with the one deployed in a certain environment'
+description: 'Downloads and parses the version deployed in the specified environment and compares it to a version provided by parameter'
+
+inputs:
+  version:
+    description: 'The version to compare against the one deployed'
+    required: true
+  namespace:  
+    description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
+    required: true
+  environment_name:  
+    description: 'The environment name (eg prod).'
+    required: true
+  base_url:
+    description: 'Base URL where the deployment can be accessed'
+    required: true
+  json_path:
+    description: 'Path to the json file where the version is specified. Defaults to "./build.json'
+    default: build.json
+  version_prop:
+    description: 'Property inside the JSON file where the version is specified. Can be nested using ".". Defaults to "version"'
+    default: version
+
+outputs:
+  deployed_version:
+    value: ${{ steps.deployed-version.outputs.version }}
+    description: 'The deployed version parsed from the remote json file, including the "v"'
+  greater:
+    value: ${{ fromJson(steps.compare.outputs.comparison-result == '>') }}
+    description: 'Boolean indicating whether the provided version is greater than the one deployed'
+  lower:
+    value: ${{ fromJson(steps.compare.outputs.comparison-result == '<') }}
+    description: 'Boolean indicating whether the provided version is lower than the one deployed'
+  equal:
+    value: ${{ fromJson(steps.compare.outputs.comparison-result == '=') }}
+    description: 'Boolean indicating whether the provided version is equal to the one deployed'
+
+runs:
+  using: "composite"
+  steps:
+      # Copies the current action's repository to the specified location, 
+      # so other actions from the same repo may be called (see get-remote-json-property)
+      # This allows us to use the same version of the action for both "deploy" (the current action) and get-remote-json-property
+    - name: Copy custom action repository
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
+    - name: Get deployed version
+      uses: ./.github/actions/ConfigureID/gh-actions/get-version
+      id: deployed-version
+      with: 
+        base_url: ${{ inputs.base_url }}
+        namespace: ${{ inputs.namespace }}
+        environment_name: ${{ inputs.environment_name }}
+        json_path: ${{ inputs.json_path }}
+        version_prop: ${{ inputs.version_prop }}
+
+    - shell: bash
+      run: |
+        echo "Comparing provided version (${{ inputs.version }}) to deployed version (${{ steps.deployed-version.outputs.version }})"
+
+    - uses: madhead/semver-utils@v3
+      id: compare
+      with:
+        # A version to work with
+        version:  ${{ inputs.version }}
+        compare-to: ${{ steps.deployed-version.outputs.version }}

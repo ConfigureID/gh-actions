@@ -415,3 +415,49 @@ jobs:
           namespace: adidas
           environment_name: staging
 ```
+
+### Compare specified version with the one deployed in a certain environment
+
+> Given a version and an environment, determines if the provided version is greater, lower or equal to the one deployed in the environment
+
+See contents [here](compare-version/action.yml).
+
+This action receives a version and the base URL, namespace and environment of an app. It compares the version to determine if the one provided is greater, lower or equal
+
+- The JSON path defaults to `build.json` but can be modified using the parameter `json_path`
+- The property path where the version is stored defaults to `version` but can be modified using the parameter `version_prop`
+
+**Steps**
+- Download the remote JSON file for the deployment
+- Read the version property from the JSON file
+- Compares both versions and return
+  - `deployed_version`: The deployed version
+  - `greater`: Boolean flag indicating whether the provided version is greater than the one deployed
+  - `lower`: Boolean flag indicating whether the provided version is lower than the one deployed
+  - `equal`: Boolean flag indicating whether the provided version is equal to the one deployed
+
+**Usage - Remote**
+```yaml
+jobs:
+   read-version:
+    name: Run different actions depending on the version
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get current version in staging
+        uses: ConfigureID/gh-actions/compare-version@v16
+        id: compare-version
+        with: 
+          version: v1.4.3
+          base_url: somedomain.com/apps
+          namespace: adidas
+          environment_name: staging
+
+      - name: Step to run if the provided version (v1.4.3) is greater
+        if: ${{ steps.compare-version.outputs.greater == 'true' }}
+        ...
+
+      - name: Step to run if the provided version (v1.4.3) is lower
+        if: ${{ steps.compare-version.outputs.lower == 'true' }}
+        ...
+```
