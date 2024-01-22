@@ -11,7 +11,7 @@ inputs:
 
 outputs:
   value:
-    value: ${{ fromJson(steps.get-property.outputs.value) }}
+    value: ${{ steps.get-property.outputs.value }}
     description: 'The remote version parsed from the json file, including the "v"'
 
 runs:
