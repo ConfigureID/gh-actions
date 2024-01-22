@@ -327,7 +327,7 @@ Add the `if:` condition to make it run `always()`, even on failure.
 - Publish unit/component tests results (if available)
 - Publish E2E tests results (if available)
 
-**Usage - Remote**
+**Usage**
 ```yaml
 jobs:
    test-reports:
@@ -364,7 +364,7 @@ The property can be a simple name of a path to a nested property, separated by "
 - Read the specified property value
 - Return the value as an action output named "value".
 
-**Usage - Remote**
+**Usage**
 ```yaml
 jobs:
    read-version:
@@ -399,7 +399,7 @@ This action receives the base URL, the namespace and the environment and returns
   - `version`: Version string with "v" (eg v1.4.3)
   - `version_number`: version number without "v" (eg 1.4.3)
 
-**Usage - Remote**
+**Usage**
 ```yaml
 jobs:
    read-version:
@@ -436,7 +436,7 @@ This action receives a version and the base URL, namespace and environment of an
   - `lower`: Boolean flag indicating whether the provided version is lower than the one deployed
   - `equal`: Boolean flag indicating whether the provided version is equal to the one deployed
 
-**Usage - Remote**
+**Usage**
 ```yaml
 jobs:
    read-version:
@@ -460,4 +460,33 @@ jobs:
       - name: Step to run if the provided version (v1.4.3) is lower
         if: ${{ steps.compare-version.outputs.lower == 'true' }}
         ...
+```
+
+### Attach build artifact to release
+
+> Given an artifact (defaults to `build-output`), a release name (tag) and filename, uploads and attaches the artifact as a zip file to the release. 
+
+See contents [here](attach-release-artifact/action.yml).
+
+**Steps**
+- Download the build artifact by name (defaults to `build-output`) to a temp directory
+- Creates a zip file from the temp directory using the provided `filename`
+- Uploads and attaches the zip file to the list of release assets
+
+**Usage**
+```yaml
+jobs:
+   read-version:
+    name: Upload artifact as release asset
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Create build artifact
+        ...
+
+      - name: Upload artifact as release asset
+        uses: ConfigureID/gh-actions/upload-release-artifact@v16
+        with:
+          release_name: v1.4.3
+          filename: imp-adidas-v1.4.3
 ```

@@ -1,0 +1,44 @@
+name: 'Attach artifact to release'
+description: 'Attach an artifact to the provided release'
+
+# Attach artifact to release action
+# Steps:
+# - Downloads artifact from previous step
+# - Compresses files
+# - Attaches the zipped artifact to the release
+inputs:
+  filename:  
+    description: 'Name of the release file'
+    required: true
+  release_name:
+    description: 'Name of the release'
+    required: true
+  artifact_name:
+    description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
+    required: false
+    default: build-output
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ./tmp
+
+    - name: Install zip
+      uses: montudor/action-zip@v1
+
+    - name: Compress files
+      shell: bash
+      run: zip -qq -r ../${{ inputs.filename }}.zip .
+      working-directory: ./tmp
+
+    - name: Attach artifact to release
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: gh release upload ${{ inputs.release_name }} ./${{ inputs.filename }}.zip
+
+        
