@@ -350,3 +350,33 @@ jobs:
        - name: Something after
          ...
 ```
+
+### Get remote JSON property value
+
+> Reads a property from a remote JSON file
+
+See contents [here](get-remote-json-property/action.yml).
+
+The property can be a simple name of a path to a nested property, separated by "."
+
+**Steps**
+- Download the remote JSON file
+- Read the specified property value
+- Return the value as an action output named "value".
+
+**Usage - Remote**
+```yaml
+jobs:
+   read-version:
+    name: Read deployment version
+    runs-on: ubuntu-latest
+    
+
+    steps:
+      - name: Get JSON "version" property value
+        uses: ConfigureID/gh-actions/get-remote-json-property
+        id: get-version
+        with: 
+          url: https://someurl.com/build.json
+          property: version
+```

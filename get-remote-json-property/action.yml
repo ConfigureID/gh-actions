@@ -1,0 +1,24 @@
+name: 'Reads a property from a remote JSON file'
+description: 'Downloads the file and extracts the specified property'
+
+inputs:
+  url:
+    description: 'URL of the JSON file'
+    required: true
+  property:
+    description: 'Property inside the JSON file to extract. Can be nested using "."'
+    required: true
+
+outputs:
+  value:
+    value: ${{ fromJson(steps.get-property.outputs.value) }}
+    description: 'The remote version parsed from the json file, including the "v"'
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      id: get-property
+      run: |
+        curl ${{ inputs.url }} > $HOME/tmp_get_prop_action.json
+        echo "value=$(jq -r '.${{ inputs.property }}' $HOME/tmp_get_prop_action.json)" >> $GITHUB_OUTPUT
