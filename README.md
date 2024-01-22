@@ -374,9 +374,44 @@ jobs:
 
     steps:
       - name: Get JSON "version" property value
-        uses: ConfigureID/gh-actions/get-remote-json-property
+        uses: ConfigureID/gh-actions/get-remote-json-property@v16
         id: get-version
         with: 
           url: https://someurl.com/build.json
           property: version
+```
+
+### Get version deployed in environment
+
+> Reads the version field of the build json file from the provided environment
+
+See contents [here](get-version/action.yml).
+
+This action receives the base URL, the namespace and the environment and returns the version of the app deployed in that environment.
+
+- The JSON path defaults to `build.json` but can be modified using the parameter `json_path`
+- The property path where the version is stored defaults to `version` but can be modified using the parameter `version_prop`
+
+**Steps**
+- Download the remote JSON file for the deployment
+- Read the version property
+- Return the deployed version in two output variables: 
+  - `version`: Version string with "v" (eg v1.4.3)
+  - `version_number`: version number without "v" (eg 1.4.3)
+
+**Usage - Remote**
+```yaml
+jobs:
+   read-version:
+    name: Read staging version
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get deployed version
+        uses: ConfigureID/gh-actions/get-version@v16
+        id: deployed-version
+        with: 
+          base_url: somedomain.com/apps
+          namespace: adidas
+          environment_name: staging
 ```
