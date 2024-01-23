@@ -1,10 +1,11 @@
 name: Deploy
 description: "Deploys an static application to a cloud service"
 
-# Action to deploy the project files to a Cloud Service (supports Github Pages and GCS)
+# Action to deploy a static application to a Cloud Service (supports Github Pages and GCS)
+# It can DEPLOY a build created on a previous step or PROMOTE an existing release to an specified environment (eg. integration, staging, production)..
 # Steps:
 # - Creates a Github Deployment object with status "start" and the name
-# - Download an artifact from a previous step
+# - Downloads an artifact from a previous step OR an asset from an existing release.
 # - Deploy the files to the specified path ("namespace/environment_name" or "to") in Github Pages or GCS
 # - Marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
 inputs:
@@ -18,10 +19,14 @@ inputs:
     description: 'Directory where the project must be deployed to. If not specified namespace/environment_name is used'
     required: false
     default: ''
-  artifact_name:
-    description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
+  release:
+    description: 'If defined, the name of the release (eg. v1.4.3) that will be PROMOTED. If not defined, a build from a previous step is DEPLOYED'
     required: false
-    default: build-output
+    default: ''
+  artifact_name:
+    description: 'In PROMOTE mode, the name of the release asset (defaults to <repo-name>-<release>.zip). In DEPLOY mode, the name of the artifact created in a previous step (defaults to build-output)'
+    required: false
+    default: ''
   github_token:
     description: 'GitHub token with permissions to push to the gh-pages branch'
     required: false
@@ -30,7 +35,7 @@ inputs:
     description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
     required: true
   cloud_credentials:
-    description: 'Credentials of the cloud service where the project will be deployed to'
+    description: 'Credentials of the cloud service where the application will be deployed/promoted to'
     required: false
   cloud_bucket:
     description: 'Name of the Cloud service (eg. GCS) bucket'
@@ -61,20 +66,49 @@ runs:
   using: "composite"
 
   steps:
-    - name: Start deployment
+    - name: Set mode variables
+      id: mode
+      shell: bash
+      run: |
+        if [ "${{ inputs.release }}" != '' ]; then
+          echo "Promoting release ${{ inputs.release }}";
+          echo "ref=tags/${{ inputs.release }}" >> $GITHUB_OUTPUT;
+          echo "artifact_name=${{ inputs.artifact_name != '' &&  inputs.artifact_name  || format('{0}-{1}.zip', github.event.repository.name, inputs.release) }}" >> $GITHUB_OUTPUT;
+        else
+          echo "Deploying build created in previous step";
+          echo "ref=${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}" >> $GITHUB_OUTPUT;
+          echo "artifact_name=${{ inputs.artifact_name != '' && inputs.artifact_name || 'build-output' }}" >> $GITHUB_OUTPUT;
+        fi
+
+    - name: Start build deployment
       uses: bobheadxi/deployments@v1.3.0
       id: deployment
       with:
         step: start
         token: ${{ inputs.github_token }}
         env: ${{ inputs.environment_name }}
-        ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+        ref: ${{ steps.mode.outputs.ref }}
 
-    - name: Download artifact
+    - name: Download build artifact
+      if: ${{ inputs.release == '' }}
       uses: actions/download-artifact@v3
       with:
-        name: ${{ inputs.artifact_name }}
+        name: ${{ steps.mode.outputs.artifact_name }}
         path: ./tmp
+
+    - name: Download release asset
+      if: ${{ inputs.release != '' }}
+      uses: dsaltares/fetch-gh-release-asset@1.1.0
+      with:
+        version: 'tags/${{ inputs.release }}'
+        file: ${{ steps.mode.outputs.artifact_name }}
+        token: ${{ inputs.github_token }}
+
+    - name: Unzip release
+      if: ${{ inputs.release != '' }}
+      uses: montudor/action-zip@v1
+      with:
+        args: unzip -qq ${{ steps.mode.outputs.artifact_name }} -d ./tmp
 
     # Copies the current action's repository to the specified location, 
     # so other actions from the same repo may be called (see sync below)
