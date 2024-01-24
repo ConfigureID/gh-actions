@@ -1,6 +1,10 @@
 name: 'Get deployed version from environment'
 description: 'Resolves the deployed version in the provided environment by parsing the JSON file with build information'
 
+# Action to retrieve the deployed version from the specified environment.
+# It generates the correct URL for the environment, downloads the "build.json" file and extracts the value of the "version" property.
+# It returns the version with and without the prefix "v"
+# The name of the JSON file and the version property can be overriden.
 inputs:
   namespace:  
     description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'

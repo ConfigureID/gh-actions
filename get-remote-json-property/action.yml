@@ -1,6 +1,8 @@
 name: 'Reads a property from a remote JSON file'
 description: 'Downloads the file and extracts the specified property'
 
+# Action to read a remote JSON file and extract an specified property value from it.
+# The property can be a path (nested property), separating the parts with "."
 inputs:
   url:
     description: 'URL of the JSON file'
@@ -12,7 +14,7 @@ inputs:
 outputs:
   value:
     value: ${{ steps.get-property.outputs.value }}
-    description: 'The remote version parsed from the json file, including the "v"'
+    description: 'The value of the property inside the JSON'
 
 runs:
   using: "composite"

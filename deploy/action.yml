@@ -2,7 +2,7 @@ name: Deploy
 description: "Deploys an static application to a cloud service"
 
 # Action to deploy a static application to a Cloud Service (supports Github Pages and GCS)
-# It can DEPLOY a build created on a previous step or PROMOTE an existing release to an specified environment (eg. integration, staging, production)..
+# It can DEPLOY a build created on a previous step or PROMOTE an existing release to an specified environment (eg. integration, staging, production).
 # Steps:
 # - Creates a Github Deployment object with status "start" and the name
 # - Downloads an artifact from a previous step OR an asset from an existing release.
@@ -69,6 +69,7 @@ runs:
     - name: Set mode variables
       id: mode
       shell: bash
+      # Checks the mode (deploy build or promote release) and adjust the default values accordingly
       run: |
         if [ "${{ inputs.release }}" != '' ]; then
           echo "Promoting release ${{ inputs.release }}";
@@ -90,6 +91,7 @@ runs:
         ref: ${{ steps.mode.outputs.ref }}
 
     - name: Download build artifact
+      # If "deploy build" mode, download the built artifact from a previous step
       if: ${{ inputs.release == '' }}
       uses: actions/download-artifact@v3
       with:
@@ -97,6 +99,7 @@ runs:
         path: ./tmp
 
     - name: Download release asset
+      # If "promote release" mode, download the compressed asset from the release
       if: ${{ inputs.release != '' }}
       uses: dsaltares/fetch-gh-release-asset@1.1.0
       with:
@@ -105,6 +108,7 @@ runs:
         token: ${{ inputs.github_token }}
 
     - name: Unzip release
+      # If "promote release" mode, decompress the release asset
       if: ${{ inputs.release != '' }}
       uses: montudor/action-zip@v1
       with:

@@ -1,6 +1,14 @@
 name: 'Compares an specified version with the one deployed in a certain environment'
 description: 'Downloads and parses the version deployed in the specified environment and compares it to a version provided by parameter'
 
+# Action to compare an specified version with the one deployed in the specified environment.
+# It generates the correct URL for the environment, downloads the "build.json" file and extracts the value of the "version" property.
+# The name of the JSON file and the version property can be overriden.
+#
+# It returns the deployed version and 3 boolean flags:
+# - greater: The provided version is greater than the one deployed
+# - lower: The provided version is lower than the one deployed
+# - equal: The provided version is equal to the one deployed
 inputs:
   version:
     description: 'The version to compare against the one deployed'
@@ -49,6 +57,7 @@ runs:
         DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
     - name: Get deployed version
+      # Retrieves the deployed version from the specified environment
       uses: ./.github/actions/ConfigureID/gh-actions/get-version
       id: deployed-version
       with: 
@@ -62,9 +71,10 @@ runs:
       run: |
         echo "Comparing provided version (${{ inputs.version }}) to deployed version (${{ steps.deployed-version.outputs.version }})"
 
-    - uses: madhead/semver-utils@v3
+    - name: Compare provided version with the one deployed
+      # Compares the specified version with the one retrieved from the deployment
+      uses: madhead/semver-utils@v3
       id: compare
       with:
-        # A version to work with
         version:  ${{ inputs.version }}
         compare-to: ${{ steps.deployed-version.outputs.version }}
