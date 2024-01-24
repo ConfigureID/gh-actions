@@ -39,6 +39,6 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      run: gh release upload ${{ inputs.release_name }} ./${{ inputs.filename }}.zip
+      run: gh release upload ${{ inputs.release_name }} ./${{ inputs.filename }}.zip --repo ${{ github.repository }}
 
         
