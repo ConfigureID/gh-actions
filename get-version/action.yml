@@ -24,10 +24,10 @@ inputs:
 
 outputs:
   version:
-    value: "v${{ steps.get-version.outputs.value }}"
+    value: "v${{ steps.result.outputs.version_number }}"
     description: 'The remote version parsed from the json file, including the "v"'
   version_number:
-    value: ${{ steps.get-version.outputs.value }}
+    value: ${{ steps.result.outputs.version_number }}
     description: 'The remote numeric version parsed from the json file (excluding the "v")'
 
 runs:
@@ -49,3 +49,8 @@ runs:
       with: 
         url: https://${{ inputs.base_url }}/${{ inputs.namespace }}/${{ inputs.environment_name }}/${{ inputs.json_path }}
         property: version
+    
+    - name: Handle version not found
+      id: result
+      shell: bash
+      run: echo "version_number=${{ steps.get-version.outputs.value != '' && steps.get-version.outputs.value || '0.0.0' }}" >> $GITHUB_OUTPUT;
