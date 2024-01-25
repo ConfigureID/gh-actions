@@ -14,6 +14,12 @@ inputs:
     artifact_prefix:  
       description: 'Test output artifact prefix. Defaults to test-output'
       default: test-output
+    e2e:  
+      description: 'Flag that indicates whether the E2E test reports must be generated'
+      default: 'true'
+    unit:  
+      description: 'Flag that indicates whether the Unit test reports must be generated'
+      default: 'true'
 
 runs:
   using: "composite"
@@ -24,7 +30,8 @@ runs:
       with:
         path: tmp
 
-    - name: Publish Unit/Component Test Results 
+    - name: Publish Unit/Component Test Results
+      if: ${{  inputs.unit == 'true'  }} 
       uses: EnricoMi/publish-unit-test-result-action@v2
       with:
         check_name: Unit/Component Test Results
@@ -32,7 +39,8 @@ runs:
           tmp/${{ inputs.artifact_prefix }}-unit*/**/*.xml
           tmp/${{ inputs.artifact_prefix }}-unit*/**/*.json
 
-    - name: Publish E2E Test Results 
+    - name: Publish E2E Test Results
+      if: ${{  inputs.e2e == 'true'  }} 
       uses: EnricoMi/publish-unit-test-result-action@v2
       with:
         check_name: E2E Test Results
