@@ -1,0 +1,56 @@
+name: 'Get deployed version from environment'
+description: 'Resolves the deployed version in the provided environment by parsing the JSON file with build information'
+
+# Action to retrieve the deployed version from the specified environment.
+# It generates the correct URL for the environment, downloads the "build.json" file and extracts the value of the "version" property.
+# It returns the version with and without the prefix "v"
+# The name of the JSON file and the version property can be overriden.
+inputs:
+  namespace:  
+    description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
+    required: true
+  environment_name:  
+    description: 'The environment name (eg prod).'
+    required: true
+  base_url:
+    description: 'Base URL where the deployment can be accessed'
+    required: true
+  json_path:
+    description: 'Path to the json file where the version is specified. Defaults to "./build.json'
+    default: build.json
+  version_prop:
+    description: 'Property inside the JSON file where the version is specified. Can be nested using ".". Defaults to "version"'
+    default: version
+
+outputs:
+  version:
+    value: "v${{ steps.result.outputs.version_number }}"
+    description: 'The remote version parsed from the json file, including the "v"'
+  version_number:
+    value: ${{ steps.result.outputs.version_number }}
+    description: 'The remote numeric version parsed from the json file (excluding the "v")'
+
+runs:
+  using: "composite"
+  steps:
+    # Copies the current action's repository to the specified location, 
+    # so other actions from the same repo may be called (see get-remote-json-property)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and get-remote-json-property
+    - name: Copy custom action repository
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
+    - name: Get JSON "version" property
+      uses: ./.github/actions/ConfigureID/gh-actions/get-remote-json-property
+      id: get-version
+      with: 
+        url: https://${{ inputs.base_url }}/${{ inputs.namespace }}/${{ inputs.environment_name }}/${{ inputs.json_path }}
+        property: version
+    
+    - name: Handle version not found
+      id: result
+      shell: bash
+      run: echo "version_number=${{ steps.get-version.outputs.value != '' && steps.get-version.outputs.value || '0.0.0' }}" >> $GITHUB_OUTPUT;

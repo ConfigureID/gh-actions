@@ -28,7 +28,7 @@ See contents [here](.github/workflows/npm-build.yml).
 ```yaml
 jobs:
   build:
-    uses: martinmoscovich/gh-actions/.github/workflows/npm-build.yml@v2
+    uses: ConfigureID/gh-actions/.github/workflows/npm-build.yml@v16
     with:
       node_version: 14
       # Directory where this project is built (some use dist, others build, etc)
@@ -37,35 +37,6 @@ jobs:
       source_ref: main
       # Optional. Name to use when uploading the resulting artifact (defaults to build-output)
       artifact_name: build-output
-```
-
-### Promote
-
-> Promotes a release to a specified environment (eg. integration, staging, production)
-> 
-See contents [here](.github/workflows/promote.yml).
-
-**Steps**
-- Downloads an specified existing release zip file from the Github repo
-- Uncompresses the zip file
-- Deploys the file to the specified path in the repo's *Github Pages*.
-
-**Usage**
-```yaml
-jobs:
-  promote:
-    name: Promote to Staging
-    uses: martinmoscovich/gh-actions/.github/workflows/promote.yml@v2
-    with:
-      # Directory in GH Pages where the files must be deployed
-      to: staging
-      # Version to promote
-      tag: v1.2.0
-      # Name of the zip file associated with that release
-      release_filename: 'my-app.zip'
-    secrets:
-      # Github Token with permission to download the release file and commit to the gh-pages branch
-      github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Actions
@@ -106,7 +77,7 @@ jobs:
         ...
 
       - name: Build project
-        uses: martinmoscovich/gh-actions/npm-build@v2
+        uses: ConfigureID/gh-actions/npm-build@v16
         with:
           node_version: 14
           # Directory where this project is built (some use dist, others build, etc)
@@ -120,16 +91,18 @@ jobs:
          ...
 ```
 
-### Deploy to GH Pages
+### Deploy build or Promote release to Cloud Service
 
-> Deploys the project files to Github Pages
+> Deploy the project to a Cloud Service (supports Github Pages and GCS)
+
+It can **DEPLOY a build** created on a previous step or **PROMOTE an existing release** to an specified environment (eg. integration, staging, production).
 
 See contents [here](gh-deploy/action.yml).
 
 **Steps**
-- Ccreates a Github Deployment and Environment object with status "start" and the environment name
-- Downloads an artifact from a previous step
-- Deploys the files to the specified path (inputs.to) in Github Pages
+- Creates a Github Deployment object with status "start" and the name
+- Downloads an artifact from a previous step OR an asset from an existing release.
+- Deploy the files to the specified path ("namespace/environment_name" or "to") in Github Pages or GCS
 - Marks the Github Deployment object as "finished" with the status of the workflow (success, failed)
 
 **Usage (when deploying a branch)**
@@ -140,26 +113,53 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-        # Extracts the current branch/tag name. 
-        # This is shown as an example, it's not required.
-      - name: Extract branch or tag name
-        uses: tj-actions/branch-names@v5
-        id: extract_branch
-
-      - name: Deploy to GH Pages
-        uses: martinmoscovich/gh-actions/gh-deploy@v2
+      - name: Deploy branch
+        uses:  ConfigureID/gh-actions/deploy@v16
         with:
-          # Directory where the project must be deployed to
-          to: branches/${{ steps.extract_branch.outputs.current_branch }}
+          # Base URL where the app is deployed
+          base_url: ${{ vars.BASE_URL }}
+          # Namespace inside the URL. Usually the client/project name (eg. adidas, moncler)
+          namespace: ${{ vars.NAMESPACE }}
+          # Directory inside the namespace where the app should be deployed
+          environment_name: branches/${{ github.event.pull_request.head.ref }}
+
+          # Cloud service settings
+          cloud_service: gcp
+          cloud_bucket: ${{ secrets.CLOUD_BUCKET_DEV }}
+          cloud_credentials: ${{ secrets.GCP_CREDENTIALS }}
+
+          # Indicates if the assets must be cached, useful for release, staging and production
+          # Only works with GCP
+          cache: false
+
           # Optional. The name of the artifact created in a previous step. If not specified, build-output is used
           artifact_name: build-output
-          # Optional. Name of the environment object to create and associate with branch or PR. If not defined, env is not created
-          environment_name: dev-${{ steps.extract_branch.outputs.current_branch }}
-          # Github Token with permission to commit to the gh-pages of the the repository.
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
        - name: Something after
          ...
+
+        - name: Promote to Staging
+          uses: ConfigureID/gh-actions/deploy@FETI-87_release_workflow
+          with:
+            # By specifying a release, this action PROMOTES the release instead of deploying the current build
+            release: ${{ github.event.inputs.release-version }}
+            
+            # Base URL where the app is deployed
+            base_url: ${{ vars.BASE_URL }}
+            # Namespace inside the URL. Usually the client/project name (eg. adidas, moncler)
+            namespace: ${{ vars.NAMESPACE }}
+            # Directory inside the namespace where the app should be deployed
+            environment_name: staging
+
+            # Cloud service settings
+            cloud_service: gcp
+            cloud_bucket: ${{ secrets.CLOUD_BUCKET }}
+            cloud_credentials: ${{ secrets.GCP_CREDENTIALS }}
+            cloud_lb: ${{ secrets.CLOUD_LB }}
+
+            # Indicates if the assets must be cached, useful for release, staging and production
+            # Only works with GCP
+            cache: true
 ```
 
 ### Remove deployment
@@ -189,7 +189,7 @@ jobs:
         id: extract_branch
         
       - name: Prunes enviroment and files
-        uses: martinmoscovich/gh-actions/gh-prune@v2
+        uses: ConfigureID/gh-actions/gh-prune@v16
         with:
           # Directory where the project must be deployed to
           to: branches/${{ steps.extract_branch.outputs.current_branch }}
@@ -205,6 +205,8 @@ jobs:
 ### Create Release
 
 > Creates a release in the Github repository, uploading the assets
+
+> **DEPRECATED**. Replaced by Release Please Action
 
 See contents [here](release/action.yml).
 
@@ -225,7 +227,7 @@ jobs:
         ...
 
       - name: Create release
-        uses: martinmoscovich/gh-actions/release@v2
+        uses: ConfigureID/gh-actions/release@v16
         with:
           # Optional. Commit reference, only used when the tag does not exist to create it
           source_ref: main
@@ -275,15 +277,11 @@ jobs:
     needs: deploy
 
     steps:
-      - name: Extract branch or tag name
-        uses: tj-actions/branch-names@v6
-        id: extract_branch
-      
       - name: E2E Test
-        uses: ConfigureID/gh-actions/cypress@v15
+        uses: ConfigureID/gh-actions/cypress@v16
         with:
           # Test on the branch deployment on GCP
-          base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, steps.extract_branch.outputs.current_branch) }}
+          base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
        - name: Something after
@@ -327,7 +325,7 @@ Add the `if:` condition to make it run `always()`, even on failure.
 - Publish unit/component tests results (if available)
 - Publish E2E tests results (if available)
 
-**Usage - Remote**
+**Usage**
 ```yaml
 jobs:
    test-reports:
@@ -344,9 +342,149 @@ jobs:
 
     steps:
       - name: Create reports
-        uses: ConfigureID/gh-actions/test-report@v15
+        uses: ConfigureID/gh-actions/test-report@v16
 
 
        - name: Something after
          ...
+```
+
+### Get remote JSON property value
+
+> Reads a property from a remote JSON file
+
+See contents [here](get-remote-json-property/action.yml).
+
+The property can be a simple name of a path to a nested property, separated by "."
+
+**Steps**
+- Download the remote JSON file
+- Read the specified property value
+- Return the value as an action output named "value".
+
+**Usage**
+```yaml
+jobs:
+   read-version:
+    name: Read deployment version
+    runs-on: ubuntu-latest
+    
+
+    steps:
+      - name: Get JSON "version" property value
+        uses: ConfigureID/gh-actions/get-remote-json-property@v16
+        id: get-version
+        with: 
+          url: https://someurl.com/build.json
+          property: version
+```
+
+### Get version deployed in environment
+
+> Reads the version field of the build json file from the provided environment
+
+See contents [here](get-version/action.yml).
+
+This action receives the base URL, the namespace and the environment and returns the version of the app deployed in that environment.
+
+- The JSON path defaults to `build.json` but can be modified using the parameter `json_path`
+- The property path where the version is stored defaults to `version` but can be modified using the parameter `version_prop`
+
+**Steps**
+- Download the remote JSON file for the deployment
+- Read the version property
+- Return the deployed version in two output variables: 
+  - `version`: Version string with "v" (eg v1.4.3)
+  - `version_number`: version number without "v" (eg 1.4.3)
+
+**Usage**
+```yaml
+jobs:
+   read-version:
+    name: Read staging version
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get deployed version
+        uses: ConfigureID/gh-actions/get-version@v16
+        id: deployed-version
+        with: 
+          base_url: somedomain.com/apps
+          namespace: adidas
+          environment_name: staging
+```
+
+### Compare specified version with the one deployed in a certain environment
+
+> Given a version and an environment, determines if the provided version is greater, lower or equal to the one deployed in the environment
+
+See contents [here](compare-version/action.yml).
+
+This action receives a version and the base URL, namespace and environment of an app. It compares the version to determine if the one provided is greater, lower or equal
+
+- The JSON path defaults to `build.json` but can be modified using the parameter `json_path`
+- The property path where the version is stored defaults to `version` but can be modified using the parameter `version_prop`
+
+**Steps**
+- Download the remote JSON file for the deployment
+- Read the version property from the JSON file
+- Compares both versions and return
+  - `deployed_version`: The deployed version
+  - `greater`: Boolean flag indicating whether the provided version is greater than the one deployed
+  - `lower`: Boolean flag indicating whether the provided version is lower than the one deployed
+  - `equal`: Boolean flag indicating whether the provided version is equal to the one deployed
+
+**Usage**
+```yaml
+jobs:
+   read-version:
+    name: Run different actions depending on the version
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get current version in staging
+        uses: ConfigureID/gh-actions/compare-version@v16
+        id: compare-version
+        with: 
+          version: v1.4.3
+          base_url: somedomain.com/apps
+          namespace: adidas
+          environment_name: staging
+
+      - name: Step to run if the provided version (v1.4.3) is greater
+        if: ${{ steps.compare-version.outputs.greater == 'true' }}
+        ...
+
+      - name: Step to run if the provided version (v1.4.3) is lower
+        if: ${{ steps.compare-version.outputs.lower == 'true' }}
+        ...
+```
+
+### Attach build artifact to release
+
+> Given an artifact (defaults to `build-output`), a release name (tag) and filename, uploads and attaches the artifact as a zip file to the release. 
+
+See contents [here](attach-release-artifact/action.yml).
+
+**Steps**
+- Download the build artifact by name (defaults to `build-output`) to a temp directory
+- Creates a zip file from the temp directory using the provided `filename`
+- Uploads and attaches the zip file to the list of release assets
+
+**Usage**
+```yaml
+jobs:
+   read-version:
+    name: Upload artifact as release asset
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Create build artifact
+        ...
+
+      - name: Upload artifact as release asset
+        uses: ConfigureID/gh-actions/attach-release-artifact@v16
+        with:
+          release_name: v1.4.3
+          filename: imp-adidas-v1.4.3
 ```
