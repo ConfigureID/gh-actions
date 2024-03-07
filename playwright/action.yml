@@ -96,9 +96,10 @@ runs:
         name: ${{ inputs.artifact_name }}
         path: ${{ inputs.dist_dir }}
 
-    - name: Cypress run on local app
-      shell: bash
-      run: npx playwright test
+    - name: Run Playwright tests
+      uses: docker://mcr.microsoft.com/playwright:v1.34.3-jammy
+      with:
+        args: npx playwright test
       env:
         BASE_URL: ${{ inputs.base_url }}
 
