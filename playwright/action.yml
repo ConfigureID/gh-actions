@@ -99,7 +99,7 @@ runs:
     - name: Run Playwright tests
       uses: docker://mcr.microsoft.com/playwright:v1.42.1-jammy
       with:
-        args: npx playwright test
+        args: npx playwright test --project=${{ inputs.browser }}
       env:
         BASE_URL: ${{ inputs.base_url }}
 
