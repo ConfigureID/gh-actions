@@ -1,0 +1,144 @@
+name: Playwright E2E Test
+description: "Runs local/remote end to end test using Playwright and uploads the results as artifacts"
+
+# Action to run E2E Tests using Playwright.
+# It will run the test on a remote application if the URL parameter is set. 
+# If not, it will start a local server using the command defined in server_command parameter
+#
+# Steps:
+# - Checkout the repo
+# - Install the specified Node.js version and restores the node_modules cache if it exists
+# - Install dependencies (npm ci), in order to setup Playwright
+# - If local run, download the bundle artifact
+# - Run Playwright tests (either with the local server or remote)
+# - Upload HTML report
+# - Upload tests results (junit xml format)
+inputs:
+    node_version:  
+      description: 'Node.js version to use'
+    node-version-file:  
+      description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
+      default: '.node-version'
+    dist_dir:
+      description: 'Directory where the built project must be downloaded to'
+      required: false
+      default: 'dist'
+    source_ref:
+      description: 'The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)'
+      required: false
+    artifact_name:
+      description: 'The name of the artifact to download. Default is build-output'
+      required: false
+      default: build-output
+    base_url:
+      description: 'Base URL of the remote application to be tested. If not defined, a local server is run to test the application'
+      required: false
+    serve_command:
+      description: 'Command to start a local server. Defaults to npm run cypress:serve'
+      required: false
+      default: npm run cypress:serve
+    browser:
+      description: 'Browser to use in Cypress. Defaults to Chrome headless'
+      required: false
+      default: chrome
+    checkout_code:
+      description: 'If true, the code is checked out first (default). Set it to false if you have checked out the code in a previous step in the same job'
+      required: false
+      default: 'true'
+    subdir:
+      description: 'If the tests are run in a subproject of a monorepo, specify the path'
+      required: false
+      default: ''
+    test_name:
+      description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'
+      required: false
+      default: ''
+    test_results_pattern:
+      description: 'Pattern to use to find the test reports and upload them'
+      required: false
+      default: e2e/results/junit*.xml
+    NPM_TOKEN:
+      description: 'NPM Token to download the private organization packages'
+      required: false
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout code
+      if: "${{ inputs.checkout_code == 'true' }}"
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.source_ref }}
+
+    - name: Install Node.js and Restore Cache
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node_version }}
+        node-version-file: ${{ inputs.node-version-file }}
+        cache: "npm"
+        registry-url: "https://registry.npmjs.org"
+
+    - name: Install NPM packages
+      run: npm ci
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.NPM_TOKEN }}
+
+    - name: Install Playwright Browser
+      shell: bash
+      run: npx playwright install ${{ inputs.browser }} --with-deps
+
+    - name: Download artifact
+      if: "${{ inputs.base_url == '' }}"
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ${{ inputs.dist_dir }}
+
+    - name: Cypress run on local app
+      shell: bash
+      run: npx playwright test
+      env:
+        BASE_URL: ${{ inputs.base_url }}
+
+    # - name: Cypress run on remote app
+    #   if: "${{ inputs.base_url != '' }}"
+    #   uses: cypress-io/github-action@v6
+    #   with:
+    #     install: false
+    #     browser: ${{ inputs.browser }}
+    #     command: ${{ inputs.cypress_command }}
+    #     project: ${{ inputs.subdir }}
+    #   env:
+    #     CYPRESS_BASE_URL:  ${{ inputs.base_url }}
+    #     CYPRESS_CI: "true"
+
+    - name: Upload HTML Report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: e2e-html-report
+        path: /root/e2e/results/report/
+        retention-days: 1
+
+    # - uses: actions/upload-artifact@v3
+    #   if: failure()
+    #   with:
+    #     name: cypress-screenshots
+    #     path: ${{ inputs.subdir == '' && 'cypress/screenshots' || format('{0}/cypress/screenshots', inputs.subdir) }}
+    #     if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
+    # - uses: actions/upload-artifact@v3
+    #   with:
+    #     name: cypress-videos
+    #     path: ${{ inputs.subdir == '' && 'cypress/videos' || format('{0}/cypress/videos', inputs.subdir) }}
+    #     if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
+    
+    # - name: Upload JUnit Report 
+    #   uses: actions/upload-artifact@v3
+    #   if: always()
+    #   with:
+    #     name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
+    #     path: ${{ inputs.subdir == '' && inputs.test_results_pattern || format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
+    #     if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
+    #     retention-days: 1
