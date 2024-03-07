@@ -119,7 +119,7 @@ runs:
       if: always()
       with:
         name: e2e-html-report
-        path: /root/e2e/results/report/
+        path: e2e/results/report/
         retention-days: 1
 
     # - uses: actions/upload-artifact@v3
@@ -134,11 +134,11 @@ runs:
     #     path: ${{ inputs.subdir == '' && 'cypress/videos' || format('{0}/cypress/videos', inputs.subdir) }}
     #     if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
     
-    # - name: Upload JUnit Report 
-    #   uses: actions/upload-artifact@v3
-    #   if: always()
-    #   with:
-    #     name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
-    #     path: ${{ inputs.subdir == '' && inputs.test_results_pattern || format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
-    #     if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
-    #     retention-days: 1
+    - name: Upload JUnit Report 
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
+        path: ${{ inputs.subdir == '' && inputs.test_results_pattern || format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
+        if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
+        retention-days: 1
