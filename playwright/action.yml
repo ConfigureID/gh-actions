@@ -85,9 +85,9 @@ runs:
       env:
         NODE_AUTH_TOKEN: ${{ inputs.NPM_TOKEN }}
 
-    - name: Install Playwright Browser
-      shell: bash
-      run: npx playwright install ${{ inputs.browser }} --with-deps
+    #- name: Install Playwright Browser
+    #  shell: bash
+    #  run: npx playwright install ${{ inputs.browser }} --with-deps
 
     - name: Download artifact
       if: "${{ inputs.base_url == '' }}"
@@ -97,7 +97,7 @@ runs:
         path: ${{ inputs.dist_dir }}
 
     - name: Run Playwright tests
-      uses: docker://mcr.microsoft.com/playwright:v1.34.3-jammy
+      uses: docker://mcr.microsoft.com/playwright:v1.42.1-jammy
       with:
         args: npx playwright test
       env:
