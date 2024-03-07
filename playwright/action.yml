@@ -98,7 +98,7 @@ runs:
 
     - name: Cypress run on local app
       shell: bash
-      run: npx playwright test
+      run: xvfb-run npx playwright test
       env:
         BASE_URL: ${{ inputs.base_url }}
 
