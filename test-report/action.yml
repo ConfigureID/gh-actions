@@ -1,7 +1,7 @@
-name: Publish Tests Reports
+name: Publish Tests Reports in the PR
 description: "Process test reports to generate a summary and comments in the PR"
 
-# Action to process test results and  publish a report
+# Action to process test results and publish a report in the PR
 #
 # It will be generated in the Action summary and as comments in the PR.
 # It requires that the artifacts names use the specified prefix and "-unit" or "-e2e"
