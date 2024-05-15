@@ -20,6 +20,9 @@ inputs:
     action:
       description: 'Action to execute. Possible values are "prepare", "test" or "merge". Default is "test"'
       default: 'test'
+    trace:
+      description: If true, it will create a full trace of ALL tests. If false, only tests that fail will create a trace
+      default: 'false'
     node_version:  
       description: 'Node.js version to use'
     node-version-file:  
@@ -144,6 +147,7 @@ runs:
       env:
         BASE_URL: ${{ inputs.base_url }}
         SHARD: ${{ inputs.shard }}
+        TRACE: ${{ inputs.trace }}
 
     # - name: Run Playwright tests
     #   uses: docker://mcr.microsoft.com/playwright:v1.42.1-jammy
@@ -161,7 +165,7 @@ runs:
         retention-days: 1
 
     - name: Upload HTML Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
       with:
         name: e2e-html-report
@@ -169,7 +173,7 @@ runs:
         retention-days: 1
 
     - name: Upload JUnit Report 
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
       with:
         name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
