@@ -74,7 +74,7 @@ runs:
         cloud_lb: '${{ inputs.cloud_lb }}'
     
     - name: Delete Blob report after merge
-      if: inputs.delete_artifact === 'true'
+      if: inputs.delete_artifact == 'true'
       uses: geekyeggo/delete-artifact@v5
       with:
           name: ${{ inputs.artifact_name }}
