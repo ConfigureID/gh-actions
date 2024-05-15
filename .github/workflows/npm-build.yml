@@ -61,12 +61,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.source_ref }}
 
       - name: Install Node.js and Restore Cache
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node_version }}
           node-version-file: ${{ inputs.node-version-file }}
@@ -97,7 +97,7 @@ jobs:
         shell: bash
 
       - name: Upload production-ready build files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
           path: ./${{ inputs.dist_dir }}
@@ -105,7 +105,7 @@ jobs:
 
       - name: Upload test results
         if: ${{ always() && inputs.test == true }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.test_name == '' && 'test-output-unit' || format('test-output-unit-{0}', inputs.test_name) }}
           path: |

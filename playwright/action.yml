@@ -135,7 +135,7 @@ runs:
 
     - name: Download artifact
       if: "${{ inputs.action == 'test' && inputs.base_url == '' }}"
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact_name }}
         path: ${{ inputs.dist_dir }}

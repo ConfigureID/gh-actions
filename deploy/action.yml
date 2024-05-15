@@ -82,7 +82,7 @@ runs:
         fi
 
     - name: Start build deployment
-      uses: bobheadxi/deployments@v1.3.0
+      uses: bobheadxi/deployments@v1
       id: deployment
       with:
         step: start
@@ -93,7 +93,7 @@ runs:
     - name: Download build artifact
       # If "deploy build" mode, download the built artifact from a previous step
       if: ${{ inputs.release == '' }}
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ steps.mode.outputs.artifact_name }}
         path: ./tmp
@@ -144,7 +144,7 @@ runs:
     
     - name: Update deployment status
       if: always()
-      uses: bobheadxi/deployments@v1.3.0
+      uses: bobheadxi/deployments@v1
       with:
         step: finish
         token: ${{ inputs.github_token }}
