@@ -181,4 +181,11 @@ runs:
         if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
         retention-days: 1
 
+    - name: Delete Blob report after merge
+      if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
+      uses: geekyeggo/delete-artifact@v5
+      with:
+          name: blob-report-*
+          failOnError: false
+
 
