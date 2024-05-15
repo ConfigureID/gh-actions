@@ -108,7 +108,7 @@ runs:
         key: playwright-${{ inputs.browser }}-${{ hashFiles('package-lock.json') }}
 
     - name: Install Playwright Browsers
-      if: (inputs.action == 'prepare' || inputs.action == 'test') && steps.cache-playwright.outputs.cache-hit != 'true'
+      if: ${{ ((inputs.action == 'prepare' || inputs.action == 'test')) && (steps.cache-playwright.outputs.cache-hit != 'true') }}
       shell: bash
       run: npx playwright install ${{ inputs.browser }} --with-deps
 
