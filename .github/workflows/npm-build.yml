@@ -70,10 +70,18 @@ jobs:
         with:
           node-version: ${{ inputs.node_version }}
           node-version-file: ${{ inputs.node-version-file }}
-          cache: "npm"
           registry-url: "https://registry.npmjs.org"
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: |
+            node_modules
+          key: modules-${{ hashFiles('package-lock.json') }}
+
       - name: Install NPM packages
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
         shell: bash
         env:
