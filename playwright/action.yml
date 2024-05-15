@@ -101,7 +101,8 @@ runs:
 
     - name: Cache Playwright
       if: inputs.action == 'prepare' || inputs.action == 'test'
-      uses: actions/cache@v3
+      uses: actions/cache@v4
+      id: cache-playwright
       with:
         path: |
           ~/.cache/ms-playwright
