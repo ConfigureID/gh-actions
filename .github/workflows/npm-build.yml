@@ -57,7 +57,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Run
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
