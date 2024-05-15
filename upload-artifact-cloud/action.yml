@@ -1,7 +1,7 @@
-name: Upload Tests HTML Report to the Cloud
-description: "Upload the E2E Tests HTML report to the Cloud"
+name: Upload an Artifact to the Cloud
+description: "Upload an Artifact to a subpath of the deployment in the Cloud"
 
-# Action to retrieve the E2E Tests HTML Report and upload it to the Cloud.
+# Action to retrieve an artifact generated previously and upload it to the Cloud
 #
 # It will upload it to the same path as the deployment, but in a subpath
 #
@@ -9,19 +9,23 @@ description: "Upload the E2E Tests HTML report to the Cloud"
 # - Download the test artifact
 # - Sync to the Cloud 
 # - Delete the test artifact is requested
+#
 inputs:
     artifact_name:  
-      description: 'E2E Test output artifact name. Defaults to "e2e-html-report"'
-      default: e2e-html-report
+      description: 'Artifact name to upload'
+      required: true
     subpath:
-      description: 'Subpath where the artifact must be uploaded. Defaults to "tests"'
-      default: tests
+      description: 'Subpath where the artifact must be uploaded'
+      required: true
+    delete_artifact:
+      description: 'Whether the artifact must be deleted after being uploaded. Defaults to false'
+      default: 'false'
 
     namespace:  
       description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
       required: true
     environment_name:  
-      description: 'The environment name to create a deployment.'
+      description: 'The environment name (dev or branches/some-branch) to create a deployment.'
       required: true
     cloud_service:
       description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
@@ -35,6 +39,13 @@ inputs:
     cloud_lb:
       description: 'Load Balancer Name'
       required: false
+    cache:
+      description: 'Enable or disable cache'
+      required: true
+    delete:
+      description: 'Delete extra files in the destination not found in the source'
+      required: false
+      default: 'true'
 
 runs:
   using: "composite"
@@ -50,21 +61,30 @@ runs:
         CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
         DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
-    - name: Upload E2E HTML Report
-      uses: ./.github/actions/ConfigureID/gh-actions/upload-artifact-cloud
+    - name: Download artifact
+      uses: actions/download-artifact@v4
       with:
-        artifact_name: ${{ inputs.artifact_name }}
-        subpath: ${{ inputs.subpath }}
-        delete_artifact: true
+        path: tmp-upload-artifact-cloud
+        name: ${{ inputs.artifact_name }}
 
+    - name: Upload E2E HTML Report
+      uses: ./.github/actions/ConfigureID/gh-actions/sync
+      with:
+        source_dir: tmp-upload-artifact-cloud
         namespace: ${{ inputs.namespace }}
-        environment_name: ${{ inputs.environment_name }}
+        environment_name: ${{ inputs.environment_name }}/${{ inputs.subpath }}
         
-        delete: true
-        cache: false          
+        cache: ${{ inputs.cache }}
+        delete: ${{ inputs.delete }}
 
         cloud_service: ${{ inputs.cloud_service }}
         cloud_bucket: ${{ inputs.cloud_bucket }}
         cloud_credentials: ${{ inputs.cloud_credentials }}
         cloud_lb: '${{ inputs.cloud_lb }}'
     
+    - name: Delete Blob report after merge
+      if: inputs.delete_artifact == 'true'
+      uses: geekyeggo/delete-artifact@v5
+      with:
+          name: ${{ inputs.artifact_name }}
+          failOnError: false
