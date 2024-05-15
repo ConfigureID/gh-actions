@@ -1,13 +1,13 @@
-name: Upload Tests HTML Report to the GCP
-description: "Upload the E2E Tests HTML report to the GCP"
+name: Upload Tests HTML Report to the Cloud
+description: "Upload the E2E Tests HTML report to the Cloud"
 
-# Action to retrieve the E2E Tests HTML Report and upload it to the GCP.
+# Action to retrieve the E2E Tests HTML Report and upload it to the Cloud.
 #
 # It will upload it to the same path as the deployment, but in a subpath
 #
 # Steps:
 # - Download the test artifact
-# - Sync to GCP 
+# - Sync to the Cloud 
 # - Delete the test artifact is requested
 inputs:
     artifact_name:  
