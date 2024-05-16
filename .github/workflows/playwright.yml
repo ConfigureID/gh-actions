@@ -73,18 +73,9 @@ jobs:
     name: 🧪 Run
     runs-on: ubuntu-latest
     steps:
-      # Copies the current action's repository to the specified location, 
-      # so other actions from the same repo may be called (see sync below)
-      # This allows us to use the same version of the action for both "deploy" (the current action) and sync
-      - name: Copy custom action repository
-        shell: bash
-        run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
-        env:
-          CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
-          DESTINATION_PATH: ${{ github.workspace }}/.github/actions
-
       - name: Test
-        uses: ./.github/actions/ConfigureID/gh-actions/playwright
+        # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
+        uses: ConfigureID/gh-actions/playwright@playwright
         with:
           action: "test"
           trace: ${{ inputs.trace }}
