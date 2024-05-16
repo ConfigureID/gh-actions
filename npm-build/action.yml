@@ -17,6 +17,7 @@ inputs:
     description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
     default: '.node-version'
   npm_token:
+    description: 'NPM Token used to download private org packages. Usually ${{ secrets.NPM_TOKEN }}'
     required: false
   dist_dir:
     description: 'Directory where the built project is located'
@@ -58,15 +59,23 @@ runs:
       with:
         node-version: ${{ inputs.node_version }}
         node-version-file: ${{ inputs.node-version-file }}
-        cache: "npm"
         registry-url: "https://registry.npmjs.org"
 
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: cache-node-modules
+      with:
+        path: |
+          node_modules
+        key: modules-${{ hashFiles('package-lock.json') }}
+
     - name: Install NPM packages
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
       run: npm ci
       shell: bash
       env:
         NODE_AUTH_TOKEN: ${{ inputs.npm_token }}
-      
+
     - name: Run tests
       if: ${{ inputs.test == "true" }}
       run: npm run test

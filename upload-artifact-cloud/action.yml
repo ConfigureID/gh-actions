@@ -67,7 +67,7 @@ runs:
         path: tmp-upload-artifact-cloud
         name: ${{ inputs.artifact_name }}
 
-    - name: Upload E2E HTML Report
+    - name: Upload Artifact to Cloud
       uses: ./.github/actions/ConfigureID/gh-actions/sync
       with:
         source_dir: tmp-upload-artifact-cloud

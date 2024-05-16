@@ -50,7 +50,7 @@ runs:
         CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
         DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
-    - name: Upload E2E HTML Report
+    - name: Upload E2E Test HTML Report
       uses: ./.github/actions/ConfigureID/gh-actions/upload-artifact-cloud
       with:
         artifact_name: ${{ inputs.artifact_name }}
