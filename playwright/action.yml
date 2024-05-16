@@ -87,23 +87,6 @@ runs:
         node-version-file: ${{ inputs.node-version-file }}
         registry-url: "https://registry.npmjs.org"
 
-    - name: Cache node_modules
-      uses: actions/cache@v4
-      id: cache-node-modules
-      with:
-        # If action is "prepare", we don't need the modules, just to check if they exist or download them if not
-        lookup-only: ${{ inputs.action == 'prepare' }}
-        path: |
-          node_modules
-        key: modules-${{ hashFiles('package-lock.json') }}
-
-    - name: Install NPM packages
-      if: steps.cache-node-modules.outputs.cache-hit != 'true'
-      run: npm ci
-      shell: bash
-      env:
-        NODE_AUTH_TOKEN: ${{ inputs.NPM_TOKEN }}
-
     - name: Cache Playwright
       if: inputs.action == 'prepare' || inputs.action == 'test'
       uses: actions/cache@v4
@@ -114,6 +97,24 @@ runs:
         path: |
           ~/.cache/ms-playwright
         key: playwright-${{ inputs.browser }}-${{ hashFiles('package-lock.json') }}
+
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: cache-node-modules
+      with:
+        # If action is "prepare" and playwright browsers are cached, we don't need the modules, just to check if they exist or download them if not
+        # If the action is not "prepare" we need the node_modules. Also if it is prepare but we need to install playwright browser
+        lookup-only: ${{ (inputs.action == 'prepare') && (steps.cache-playwright.outputs.cache-hit == 'true') }}
+        path: |
+          node_modules
+        key: modules-${{ hashFiles('package-lock.json') }}
+
+    - name: Install NPM packages
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
+      run: npm ci
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.NPM_TOKEN }}
 
     - name: Install Playwright Browsers
       if: ${{ ((inputs.action == 'prepare' || inputs.action == 'test')) && (steps.cache-playwright.outputs.cache-hit != 'true') }}
