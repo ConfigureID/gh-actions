@@ -1,0 +1,187 @@
+name: Playwright E2E Testing - Sharded
+
+# Reusable workflow to test E2E using Playwright using a multiple VMs (via the shard feature)
+#
+# It contains a 3 jobs to:
+# - Install the dependencies (node_modules and Playwright browsers)
+# - Run the tests, split on multiple VMs
+# - Generate the JSON/XML results and HTML report
+# - Upload them as artifacts
+#
+# It uses 3 jobs, because:
+# - The first one run on a single VM and prepares the execution by installing/caching dependencies and setting up the matrix parameters
+# - The second one actually runs the tests on multiple VMs in parallel
+# - The third one runs on a single VM after the testing has finished and merges the results to generate the JSON/XML/HTML output
+#
+# The number of shards is configurable. Defaults to 3.
+#
+on:
+  workflow_call:
+    secrets:
+      NPM_TOKEN:
+        required: false
+    inputs:
+      shards:
+        description: 'Number of shards to use (parallel execution). Default to 3'
+        type: number
+        default: 3
+      trace:
+        description: If true, it will create a full trace of ALL tests. If false, only tests that fail will create a trace
+        default: false
+        type: boolean
+      node_version:  
+        description: 'Node.js version to use'
+        type: string
+      node-version-file:  
+        description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
+        type: string
+        default: '.node-version'
+      dist_dir:
+        description: 'Directory where the built project must be downloaded to'
+        required: false
+        default: 'dist'
+        type: string
+      source_ref:
+        description: 'The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)'
+        required: false
+        type: string
+      artifact_name:
+        description: 'The name of the artifact to download. Default is build-output'
+        required: false
+        default: build-output
+        type: string
+      base_url:
+        description: 'Base URL of the remote application to be tested. If not defined, a local server is run to test the application'
+        required: false
+        type: string
+      browser:
+        description: 'Browser to use in Playwright. Defaults to Chromium headless'
+        required: false
+        default: chromium
+        type: string
+      subdir:
+        description: 'If the tests are run in a subproject of a monorepo, specify the path'
+        required: false
+        default: ''
+        type: string
+      test_name:
+        description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'
+        required: false
+        default: ''
+        type: string
+      test_results_pattern:
+        description: 'Pattern to use to find the test reports and upload them'
+        required: false
+        default: e2e/results/junit*.xml
+        type: string
+      
+jobs:
+  prepare:
+    timeout-minutes: 60
+    name: Prepare
+    runs-on: ubuntu-latest
+    outputs:
+      shard: ${{ steps.matrix.outputs.shard }}
+    steps:
+      # Copies the current action's repository to the specified location, 
+      # so other actions from the same repo may be called (see sync below)
+      # This allows us to use the same version of the action for both "deploy" (the current action) and sync
+      - name: Copy custom action repository
+        shell: bash
+        run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+        env:
+          CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+          DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
+      - name: Prepare E2E Testing environment
+        uses: ./.github/actions/ConfigureID/gh-actions/playwright
+        with:
+          action: "prepare"
+          browser: ${{ inputs.browser }}
+
+          node_version: ${{ inputs.node_version }}
+          node-version-file: ${{ inputs.node-version-file }}
+          source_ref: ${{ inputs.source_ref }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Create Matrix shard param
+        id: matrix
+        shell: bash
+        run: |
+          count=${{ inputs.shards }};
+          for i in $(seq $count); do  result="$result$i, "; done
+          result="[${result::-2}]";
+          echo "Matrix shard Param: $result"
+          echo "shard=$result" >> $GITHUB_OUTPUT
+
+  test:
+    name: 🧪 Run (${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: ubuntu-latest
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.prepare.outputs.shard) }}
+    steps:
+      # Copies the current action's repository to the specified location, 
+      # so other actions from the same repo may be called (see sync below)
+      # This allows us to use the same version of the action for both "deploy" (the current action) and sync
+      - name: Copy custom action repository
+        shell: bash
+        run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+        env:
+          CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+          DESTINATION_PATH: ${{ github.workspace }}/.github/actions      
+
+      - name: Test
+        uses: ./.github/actions/ConfigureID/gh-actions/playwright
+        with:
+          action: "test"
+          shard: "${{ matrix.shard }}/${{ strategy.job-total }}"
+          trace: ${{ inputs.trace }}
+          browser: ${{ inputs.browser }}
+          base_url: ${{ inputs.base_url }}
+
+          node_version: ${{ inputs.node_version }}
+          node-version-file: ${{ inputs.node-version-file }}
+          source_ref: ${{ inputs.source_ref }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+          # Only required if no base url is sent (to create a local server)
+          # dist_dir: ${{ inputs.dist_dir }}
+          # artifact_name: ${{ inputs.artifact_name }}
+          
+          # Only required if no shard is specified (when sharding this is required in the "merge" action)
+          # test_name: ${{ inputs.test_name }}
+          # test_results_pattern: ${{ inputs.test_results_pattern }}
+          # subdir: ${{ inputs.subdir }}
+
+  create-report:
+    name: Report
+    if: always() && !cancelled()
+    needs: test
+
+    runs-on: ubuntu-latest
+    steps:
+      # Copies the current action's repository to the specified location, 
+      # so other actions from the same repo may be called (see sync below)
+      # This allows us to use the same version of the action for both "deploy" (the current action) and sync
+      - name: Copy custom action repository
+        shell: bash
+        run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+        env:
+          CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+          DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
+      - name: Merge Test Results
+        uses: ./.github/actions/ConfigureID/gh-actions/playwright
+        with:
+          action: "merge"
+
+          node_version: ${{ inputs.node_version }}
+          node-version-file: ${{ inputs.node-version-file }}
+          source_ref: ${{ inputs.source_ref }}
+          subdir: ${{ inputs.subdir }}
+          test_name: ${{ inputs.test_name }}
+          test_results_pattern: ${{ inputs.test_results_pattern }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

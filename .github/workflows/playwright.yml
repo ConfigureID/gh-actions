@@ -1,0 +1,105 @@
+name: Playwright E2E Testing - Simple
+
+# Reusable workflow to test E2E using Playwright using a single VM
+#
+# It contains a single job with a single step to call the Playwright action without sharding, so it will
+# - Install the dependencies (node_modules and Playwright browsers)
+# - Run tests on a single VM
+# - Generate the JSON/XML results and HTML report
+# - Upload them as artifacts
+#
+# This is the same as simply calling the action. It is created as a reusable workflow to make the call 
+# more similar to the shared version (where using a reusable workflow is actually useful). 
+# Just add/remove the "-sharded" suffix and add/remove the number of shards
+#
+on:
+  workflow_call:
+    secrets:
+      NPM_TOKEN:
+        required: false
+    inputs:
+      trace:
+        description: If true, it will create a full trace of ALL tests. If false, only tests that fail will create a trace
+        default: false
+        type: boolean
+      node_version:  
+        description: 'Node.js version to use'
+        type: string
+      node-version-file:  
+        description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
+        type: string
+        default: '.node-version'
+      dist_dir:
+        description: 'Directory where the built project must be downloaded to'
+        required: false
+        default: 'dist'
+        type: string
+      source_ref:
+        description: 'The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)'
+        required: false
+        type: string
+      artifact_name:
+        description: 'The name of the artifact to download. Default is build-output'
+        required: false
+        default: build-output
+        type: string
+      base_url:
+        description: 'Base URL of the remote application to be tested. If not defined, a local server is run to test the application'
+        required: false
+        type: string
+      browser:
+        description: 'Browser to use in Playwright. Defaults to Chromium headless'
+        required: false
+        default: chromium
+        type: string
+      subdir:
+        description: 'If the tests are run in a subproject of a monorepo, specify the path'
+        required: false
+        default: ''
+        type: string
+      test_name:
+        description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'
+        required: false
+        default: ''
+        type: string
+      test_results_pattern:
+        description: 'Pattern to use to find the test reports and upload them'
+        required: false
+        default: e2e/results/junit*.xml
+        type: string
+      
+jobs:
+  test:
+    name: 🧪 Run
+    runs-on: ubuntu-latest
+    steps:
+      # Copies the current action's repository to the specified location, 
+      # so other actions from the same repo may be called (see sync below)
+      # This allows us to use the same version of the action for both "deploy" (the current action) and sync
+      - name: Copy custom action repository
+        shell: bash
+        run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+        env:
+          CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+          DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
+      - name: Test
+        uses: ./.github/actions/ConfigureID/gh-actions/playwright
+        with:
+          action: "test"
+          trace: ${{ inputs.trace }}
+          browser: ${{ inputs.browser }}
+          base_url: ${{ inputs.base_url }}
+
+          node_version: ${{ inputs.node_version }}
+          node-version-file: ${{ inputs.node-version-file }}
+          source_ref: ${{ inputs.source_ref }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+          test_name: ${{ inputs.test_name }}
+          test_results_pattern: ${{ inputs.test_results_pattern }}
+          subdir: ${{ inputs.subdir }}
+
+          # Only required if no base url is sent (to create a local server)
+          # dist_dir: ${{ inputs.dist_dir }}
+          # artifact_name: ${{ inputs.artifact_name }}
