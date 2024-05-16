@@ -88,9 +88,9 @@ jobs:
       # This allows us to use the same version of the action for both "deploy" (the current action) and sync
       - name: Copy custom action repository
         shell: bash
-        run: bash ${{github.workflow }}/../../scripts/copy_actions_repo.sh
+        run: bash ${{ github.workspace }}/../../_actions/ConfigureID/gh-actions/scripts/copy_actions_repo.sh
         env:
-          CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+          CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.workspace }}/../../_actions/ConfigureID/gh-actions/main
           DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
       - name: Prepare E2E Testing environment
