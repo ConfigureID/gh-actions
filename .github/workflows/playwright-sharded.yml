@@ -89,10 +89,8 @@ jobs:
       - name: Copy custom action repository
         shell: bash
         run: |
-          echo "${{ github.action_ref }}"
-          echo "${{ github.workflow_ref }}"
-          ls ${{ github.workspace }}/../../_temp
-          ls ${{ github.workspace }}/../../imp-hb
+          ls ${{ github.workspace }}/../../_temp/_github_workflow
+          ls ${{ github.workspace }}/../../imp-hb/_github_workflow
         env:
           CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.workspace }}/../../_actions/ConfigureID/gh-actions/main
           DESTINATION_PATH: ${{ github.workspace }}/.github/actions
