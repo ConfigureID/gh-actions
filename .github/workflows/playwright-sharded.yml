@@ -88,7 +88,7 @@ jobs:
       # This allows us to use the same version of the action for both "deploy" (the current action) and sync
       - name: Copy custom action repository
         shell: bash
-        run: bash ./../../scripts/copy_actions_repo.sh
+        run: bash ${{github.workflow }}/../../scripts/copy_actions_repo.sh
         env:
           CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
           DESTINATION_PATH: ${{ github.workspace }}/.github/actions
