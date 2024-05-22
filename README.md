@@ -8,7 +8,8 @@ It was created to avoid duplicating steps that are used often.
 
 The directory `[.github/workflows](.github/workflows)` contains [reusable workflows](https://docs.github.com/en/actions/learn-github-actions/reusing-workflows).
 
-This workflows are used frequently and contain multiple steps, so it is useful to extract that logic and allow other workflows to call them
+This workflows are used frequently and contain multiple steps, so it is useful to extract that logic and allow other workflows to call them.
+It also allows to reuse matrix execution strategy for parallelism
 
 ### NPM Build
 
@@ -37,6 +38,72 @@ jobs:
       source_ref: main
       # Optional. Name to use when uploading the resulting artifact (defaults to build-output)
       artifact_name: build-output
+```
+
+### Playwright E2E Testing - Simple
+
+> Runs E2E tests using Playwright sequentially on a single VM
+
+See contents [here](.github/workflows/playwright.yml).
+
+This is the same as simply calling the [action](playwright/action.yml). It is created as a reusable workflow to make the call 
+more similar to the shared version (where using a reusable workflow is actually useful). 
+Just add/remove the "-sharded" suffix and add/remove the number of shards
+
+**Steps**
+- Install the dependencies (node_modules and Playwright browsers)
+- Run tests on a single VM
+- Generate the JSON/XML results and HTML report
+- Upload them as artifacts
+
+**Usage**
+```yaml
+jobs:
+  e2e:
+    name: E2E Tests
+    needs: deploy
+    uses: ./.github/workflows/playwright.yml
+    with:
+      trace: true
+      browser: chromium
+      base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+### Playwright E2E Testing - Sharded
+
+> Runs E2E tests using Playwright in parallel on multiple VMs (matrix execution strategy)
+
+See contents [here](.github/workflows/playwright-shareded.yml).
+
+ It uses 3 jobs, because:
+- The first one run on a single VM and prepares the execution by installing/caching dependencies and setting up the matrix parameters
+- The second one actually runs the tests on multiple VMs in parallel
+- The third one runs on a single VM after the testing has finished and merges the results to generate the JSON/XML/HTML output
+
+The number of shards is configurable. Defaults to 3.
+
+**Steps**
+- Install the dependencies (node_modules and Playwright browsers)
+- Run tests on a single VM
+- Generate the JSON/XML results and HTML report
+- Upload them as artifacts
+
+**Usage**
+```yaml
+jobs:
+  e2e:
+    name: E2E Tests
+    needs: deploy
+    uses: ./.github/workflows/playwright-sharded.yml
+    with:
+      shards: 4
+      trace: true
+      browser: chromium
+      base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
 
 ## Actions
@@ -306,11 +373,78 @@ jobs:
          ...
 ```
 
+### Run E2E Tests using Playwright
+
+> Runs local/remote end to end test using Playwright and uploads the results as artifacts
+
+See contents [here](playwright/action.yml).
+
+It can run the full E2E Test suite or a single shard, if the `shard` parameter is provided.
+Also it can generate a simple HTML report or a full trace (slower and larger) by setting the `trace` flag.
+
+If a `base_url` is defined, it will be tested remotely. If not, the built artifact will be downloaded and a local server will be started.
+
+- For the remote version, ensure to mark `deploy` as a job dependency
+- For the local version, ensure to mark `build` as a job dependency and use the right artifact. 
+  **TBD**: Also, the right `serve_command` must be configured on the project (defaults to `??`)
+
+**Steps**
+- Checkout the repo
+- Install the specified Node.js version
+- Install node modules dependencies and cache
+- Install Playwright browsers and cache
+- If local run, download the bundle artifact
+- Run Playwright tests (either with the local server or remote)
+- Generate results
+- If sharded: Merge results once it has finished
+- Upload tests results (junit xml format)
+- Upload HTML report
+
+**Usage - Remote**
+```yaml
+jobs:
+  e2e-remote:
+    name: E2E Tests - Remote (GCP)
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: E2E Test
+        uses: ConfigureID/gh-actions/playwright@v17
+        with:
+          # Test on the branch deployment on GCP
+          base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          browser: chromium
+
+       - name: Something after
+         ...
+```
+
+**Usage - Local**
+```yaml
+jobs:
+  e2e-local:
+    name: E2E Tests - Local
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: E2E Test
+        uses: ConfigureID/gh-actions/playwright@v17
+        with:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          browser: chromium
+
+       - name: Something after
+         ...
+```
+
 ### Generate and publish Test reports
 
 > Process test reports to generate a summary and comments in the PR
 
-See contents [here](test-report/action.yml).
+See contents [here](test-report-pr/action.yml).
 
 It will be generated in the Action summary and as comments in the PR.
 
@@ -342,7 +476,39 @@ jobs:
 
     steps:
       - name: Create reports
-        uses: ConfigureID/gh-actions/test-report@v16
+        uses: ConfigureID/gh-actions/test-report-pr@v17
+
+
+       - name: Something after
+         ...
+```
+
+### Upload the E2E Test HTML Report to the Cloud
+
+> Retrieve the E2E Tests HTML Report and upload it to the Cloud (eg. GCP).
+
+See contents [here](test-report-cloud/action.yml).
+
+It requires the HTML report artifact name (defaults to `e2e-html-report`) and a subpath (defaults to `tests`) and uploads
+the report to the same environment tests inside the subpath
+
+**Steps**
+- Download the HTML Report artifact
+- Upload it to the Cloud (eg. GCP)
+- Publish E2E tests results (if available)
+
+**Usage**
+```yaml
+jobs:
+   test-reports:
+    name: Upload HTML report
+    needs: [e2e-remote]
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Upload E2E Test HTML reports
+        uses: ConfigureID/gh-actions/test-report-cloud@v17
 
 
        - name: Something after

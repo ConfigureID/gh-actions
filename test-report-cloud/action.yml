@@ -1,0 +1,70 @@
+name: Upload Tests HTML Report to the Cloud
+description: "Upload the E2E Tests HTML report to the Cloud"
+
+# Action to retrieve the E2E Tests HTML Report and upload it to the Cloud.
+#
+# It will upload it to the same path as the deployment, but in a subpath
+#
+# Steps:
+# - Download the test artifact
+# - Sync to the Cloud 
+# - Delete the test artifact is requested
+inputs:
+    artifact_name:  
+      description: 'E2E Test output artifact name. Defaults to "e2e-html-report"'
+      default: e2e-html-report
+    subpath:
+      description: 'Subpath where the artifact must be uploaded. Defaults to "tests"'
+      default: tests
+
+    namespace:  
+      description: 'The project namespace (eg adidas). Used as a prefix for the publish directory'
+      required: true
+    environment_name:  
+      description: 'The environment name to create a deployment.'
+      required: true
+    cloud_service:
+      description: 'Cloud Service to deploy to (supports GH Pages and GCP)'
+      required: true
+    cloud_credentials:
+      description: 'Credentials of the cloud service where the project will be deployed to'
+      required: false
+    cloud_bucket:
+      description: 'Name of the Cloud service (eg. GCS) bucket'
+      required: false
+    cloud_lb:
+      description: 'Load Balancer Name'
+      required: false
+
+runs:
+  using: "composite"
+
+  steps:
+    # Copies the current action's repository to the specified location, 
+    # so other actions from the same repo may be called (see sync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and sync
+    - name: Copy custom action repository
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
+    - name: Upload E2E Test HTML Report
+      uses: ./.github/actions/ConfigureID/gh-actions/upload-artifact-cloud
+      with:
+        artifact_name: ${{ inputs.artifact_name }}
+        subpath: ${{ inputs.subpath }}
+        delete_artifact: true
+
+        namespace: ${{ inputs.namespace }}
+        environment_name: ${{ inputs.environment_name }}
+        
+        delete: true
+        cache: false          
+
+        cloud_service: ${{ inputs.cloud_service }}
+        cloud_bucket: ${{ inputs.cloud_bucket }}
+        cloud_credentials: ${{ inputs.cloud_credentials }}
+        cloud_lb: '${{ inputs.cloud_lb }}'
+    

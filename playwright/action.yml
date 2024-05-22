@@ -1,0 +1,192 @@
+name: Playwright E2E Test
+description: "Runs local/remote end to end test using Playwright and uploads the results as artifacts"
+
+# Action to run E2E Tests using Playwright.
+# It will run the test on a remote application if the URL parameter is set. 
+# If not, it will start a local server using the command defined in server_command parameter
+#
+# Steps:
+# - Checkout the repo
+# - Install the specified Node.js version and restores the node_modules cache if it exists
+# - Install dependencies (npm ci), in order to setup Playwright
+# - If local run, download the bundle artifact
+# - Run Playwright tests (either with the local server or remote)
+# - Upload HTML report
+# - Upload tests results (junit xml format)
+inputs:
+    shard:
+      description: 'Shard name (eg 1/4). If empty, the execution is not sharded'
+      default: ''
+    action:
+      description: 'Action to execute. Possible values are "prepare", "test" or "merge". Default is "test"'
+      default: 'test'
+    trace:
+      description: If true, it will create a full trace of ALL tests. If false, only tests that fail will create a trace
+      default: 'false'
+    node_version:  
+      description: 'Node.js version to use'
+    node-version-file:  
+      description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
+      default: '.node-version'
+    dist_dir:
+      description: 'Directory where the built project must be downloaded to'
+      required: false
+      default: 'dist'
+    source_ref:
+      description: 'The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)'
+      required: false
+    artifact_name:
+      description: 'The name of the artifact to download. Default is build-output'
+      required: false
+      default: build-output
+    base_url:
+      description: 'Base URL of the remote application to be tested. If not defined, a local server is run to test the application'
+      required: false
+    # serve_command:
+    #   description: 'Command to start a local server. Defaults to npm run cypress:serve'
+    #   required: false
+    #   default: npm run cypress:serve
+    browser:
+      description: 'Browser to use in Playwright. Defaults to Chrome headless'
+      required: false
+      default: chromium
+    checkout_code:
+      description: 'If true, the code is checked out first (default). Set it to false if you have checked out the code in a previous step in the same job'
+      required: false
+      default: 'true'
+    subdir:
+      description: 'If the tests are run in a subproject of a monorepo, specify the path'
+      required: false
+      default: ''
+    test_name:
+      description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'
+      required: false
+      default: ''
+    test_results_pattern:
+      description: 'Pattern to use to find the test reports and upload them'
+      required: false
+      default: e2e/results/junit*.xml
+    NPM_TOKEN:
+      description: 'NPM Token to download the private organization packages'
+      required: false
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Checkout code
+      if: "${{ inputs.checkout_code == 'true' }}"
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.source_ref }}
+
+    - name: Install Node.js and Restore Cache
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node_version }}
+        node-version-file: ${{ inputs.node-version-file }}
+        registry-url: "https://registry.npmjs.org"
+
+    - name: Cache Playwright
+      if: inputs.action == 'prepare' || inputs.action == 'test'
+      uses: actions/cache@v4
+      id: cache-playwright
+      with:
+        # If action is "prepare", we don't need playwright, just to check if they exist or download them if not
+        lookup-only: ${{ inputs.action == 'prepare' }}
+        path: |
+          ~/.cache/ms-playwright
+        key: playwright-${{ inputs.browser }}-${{ hashFiles('package-lock.json') }}
+
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: cache-node-modules
+      with:
+        # If action is "prepare" and playwright browsers are cached, we don't need the modules, just to check if they exist or download them if not
+        # If the action is not "prepare" we need the node_modules. Also if it is prepare but we need to install playwright browser
+        lookup-only: ${{ (inputs.action == 'prepare') && (steps.cache-playwright.outputs.cache-hit == 'true') }}
+        path: |
+          node_modules
+        key: modules-${{ hashFiles('package-lock.json') }}
+
+    - name: Install NPM packages
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
+      run: npm ci
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.NPM_TOKEN }}
+
+    - name: Install Playwright Browsers
+      if: ${{ ((inputs.action == 'prepare' || inputs.action == 'test')) && (steps.cache-playwright.outputs.cache-hit != 'true') }}
+      shell: bash
+      run: npx playwright install ${{ inputs.browser }} --with-deps
+
+    - name: Download blob reports from GitHub Actions Artifacts
+      if: inputs.action == 'merge'
+      uses: actions/download-artifact@v4
+      with:
+        path: e2e-blob-reports
+        pattern: blob-report-*
+        merge-multiple: true
+
+    - name: Merge into HTML Report
+      if: inputs.action == 'merge'
+      shell: bash
+      run: npx playwright merge-reports --config=playwright.config.ts ./e2e-blob-reports
+
+    - name: Download artifact
+      if: "${{ inputs.action == 'test' && inputs.base_url == '' }}"
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ${{ inputs.dist_dir }}
+
+    - name: Run Playwright tests
+      if: inputs.action == 'test'
+      shell: bash
+      run: npx playwright test --project=${{ inputs.browser }} ${{ inputs.shard == '' && '' || format('--shard={0}', inputs.shard) }}
+      env:
+        BASE_URL: ${{ inputs.base_url }}
+        SHARD: ${{ inputs.shard }}
+        TRACE: ${{ inputs.trace }}
+
+    # - name: Run Playwright tests
+    #   uses: docker://mcr.microsoft.com/playwright:v1.42.1-jammy
+    #   with:
+    #     args: npx playwright test --project=${{ inputs.browser }}
+    #   env:
+    #     BASE_URL: ${{ inputs.base_url }}
+
+    - name: Upload report
+      if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: blob-report-${{ matrix.shard }}
+        path: blob-report
+        retention-days: 1
+
+    - name: Upload HTML Report
+      uses: actions/upload-artifact@v4
+      if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
+      with:
+        name: e2e-html-report
+        path: e2e/results/report/
+        retention-days: 1
+
+    - name: Upload JUnit Report 
+      uses: actions/upload-artifact@v4
+      if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
+      with:
+        name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
+        path: ${{ inputs.subdir == '' && inputs.test_results_pattern || format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
+        if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
+        retention-days: 1
+
+    - name: Delete Blob report after merge
+      if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
+      uses: geekyeggo/delete-artifact@v5
+      with:
+          name: blob-report-*
+          failOnError: false
+
+
