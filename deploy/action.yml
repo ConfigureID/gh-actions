@@ -132,6 +132,7 @@ runs:
         source_dir: tmp
         namespace: ${{ inputs.namespace }}
         environment_name: ${{ inputs.environment_name }}
+        to: ${{ inputs.to }}
         base_url: ${{ inputs.base_url }}
         cloud_service: '${{ inputs.cloud_service }}'
         cloud_bucket: '${{ inputs.cloud_bucket }}'
