@@ -62,7 +62,7 @@ on:
       subdir:
         description: 'If the tests are run in a subproject of a monorepo, specify the path'
         required: false
-        default: ''
+        default: '.'
         type: string
       test_name:
         description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'

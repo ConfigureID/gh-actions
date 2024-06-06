@@ -57,7 +57,7 @@ inputs:
     subdir:
       description: 'If the tests are run in a subproject of a monorepo, specify the path'
       required: false
-      default: ''
+      default: '.'
     test_name:
       description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'
       required: false
@@ -119,19 +119,21 @@ runs:
     - name: Install Playwright Browsers
       if: ${{ ((inputs.action == 'prepare' || inputs.action == 'test')) && (steps.cache-playwright.outputs.cache-hit != 'true') }}
       shell: bash
+      working-directory: ${{ inputs.subdir }}
       run: npx playwright install ${{ inputs.browser }} --with-deps
 
     - name: Download blob reports from GitHub Actions Artifacts
       if: inputs.action == 'merge'
       uses: actions/download-artifact@v4
       with:
-        path: e2e-blob-reports
-        pattern: blob-report-*
+        path: ${{ inputs.subdir }}/e2e-blob-reports
+        pattern: ${{ inputs.test_name == '' && 'blob-report' || format('blob-report-{0}', inputs.test_name) }}-*
         merge-multiple: true
 
     - name: Merge into HTML Report
       if: inputs.action == 'merge'
       shell: bash
+      working-directory: ${{ inputs.subdir }}
       run: npx playwright merge-reports --config=playwright.config.ts ./e2e-blob-reports
 
     - name: Download artifact
@@ -139,11 +141,12 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact_name }}
-        path: ${{ inputs.dist_dir }}
+        path: ${{ inputs.subdir }}/${{ inputs.dist_dir }}
 
     - name: Run Playwright tests
       if: inputs.action == 'test'
       shell: bash
+      working-directory: ${{ inputs.subdir }}
       run: npx playwright test --project=${{ inputs.browser }} ${{ inputs.shard == '' && '' || format('--shard={0}', inputs.shard) }}
       env:
         BASE_URL: ${{ inputs.base_url }}
@@ -161,16 +164,18 @@ runs:
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard != ''
       uses: actions/upload-artifact@v4
       with:
-        name: blob-report-${{ matrix.shard }}
-        path: blob-report
+        name: blob-report-${{ inputs.test_name == '' && matrix.shard || format('{0}-{1}', inputs.test_name, matrix.shard) }}
+        path: ${{ inputs.subdir }}/blob-report
+        # path: ${{ inputs.subdir == '' && 'blob-report' || format('{0}/blob-report', inputs.subdir) }}
         retention-days: 1
 
     - name: Upload HTML Report
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
       with:
-        name: e2e-html-report
-        path: e2e/results/report/
+        name: ${{ inputs.test_name == '' && 'e2e-html-report' || format('e2e-html-report-{0}', inputs.test_name) }}
+        path: ${{ inputs.subdir }}/e2e/results/report/
+        # path: ${{ inputs.subdir == '' && 'e2e/results/report/' || format('{0}/e2e/results/report/', inputs.subdir) }}
         retention-days: 1
 
     - name: Upload JUnit Report 
@@ -178,7 +183,8 @@ runs:
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
       with:
         name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
-        path: ${{ inputs.subdir == '' && inputs.test_results_pattern || format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
+        path: ${{ format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
+        #path: ${{ inputs.subdir == '' && inputs.test_results_pattern || format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
         if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
         retention-days: 1
 
@@ -186,7 +192,7 @@ runs:
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
       uses: geekyeggo/delete-artifact@v5
       with:
-          name: blob-report-*
+          name: ${{ inputs.test_name == '' && 'blob-report' || format('blob-report-{0}', inputs.test_name) }}-*
           failOnError: false
 
 
