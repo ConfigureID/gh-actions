@@ -85,7 +85,7 @@ jobs:
     steps:
       - name: Prepare E2E Testing environment
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v18
+        uses: ConfigureID/gh-actions/playwright@FETI-98_playwright_monorepo
         with:
           action: "prepare"
           browser: ${{ inputs.browser }}
@@ -116,7 +116,7 @@ jobs:
     steps:
       - name: Test
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v18
+        uses: ConfigureID/gh-actions/playwright@FETI-98_playwright_monorepo
         with:
           action: "test"
           shard: "${{ matrix.shard }}/${{ strategy.job-total }}"
@@ -147,7 +147,7 @@ jobs:
     steps:
       - name: Merge Test Results
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v18
+        uses: ConfigureID/gh-actions/playwright@FETI-98_playwright_monorepo
         with:
           action: "merge"
 
