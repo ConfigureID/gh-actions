@@ -88,6 +88,7 @@ jobs:
         uses: ConfigureID/gh-actions/playwright@FETI-98_playwright_monorepo
         with:
           action: "prepare"
+          subdir: ${{ inputs.subdir }}
           browser: ${{ inputs.browser }}
 
           node_version: ${{ inputs.node_version }}
@@ -119,6 +120,7 @@ jobs:
         uses: ConfigureID/gh-actions/playwright@FETI-98_playwright_monorepo
         with:
           action: "test"
+          subdir: ${{ inputs.subdir }}
           shard: "${{ matrix.shard }}/${{ strategy.job-total }}"
           trace: ${{ inputs.trace }}
           browser: ${{ inputs.browser }}
@@ -136,7 +138,6 @@ jobs:
           # Only required if no shard is specified (when sharding this is required in the "merge" action)
           # test_name: ${{ inputs.test_name }}
           # test_results_pattern: ${{ inputs.test_results_pattern }}
-          # subdir: ${{ inputs.subdir }}
 
   create-report:
     name: Report
@@ -150,11 +151,11 @@ jobs:
         uses: ConfigureID/gh-actions/playwright@FETI-98_playwright_monorepo
         with:
           action: "merge"
+          subdir: ${{ inputs.subdir }}
 
           node_version: ${{ inputs.node_version }}
           node-version-file: ${{ inputs.node-version-file }}
           source_ref: ${{ inputs.source_ref }}
-          subdir: ${{ inputs.subdir }}
           test_name: ${{ inputs.test_name }}
           test_results_pattern: ${{ inputs.test_results_pattern }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
