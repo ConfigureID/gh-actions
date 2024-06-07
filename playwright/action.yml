@@ -166,7 +166,6 @@ runs:
       with:
         name: blob-report-${{ inputs.test_name == '' && matrix.shard || format('{0}-{1}', inputs.test_name, matrix.shard) }}
         path: ${{ inputs.subdir }}/blob-report
-        # path: ${{ inputs.subdir == '' && 'blob-report' || format('{0}/blob-report', inputs.subdir) }}
         retention-days: 1
 
     - name: Upload HTML Report
@@ -175,7 +174,6 @@ runs:
       with:
         name: ${{ inputs.test_name == '' && 'e2e-html-report' || format('e2e-html-report-{0}', inputs.test_name) }}
         path: ${{ inputs.subdir }}/e2e/results/report/
-        # path: ${{ inputs.subdir == '' && 'e2e/results/report/' || format('{0}/e2e/results/report/', inputs.subdir) }}
         retention-days: 1
 
     - name: Upload JUnit Report 
@@ -184,7 +182,6 @@ runs:
       with:
         name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
         path: ${{ format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
-        #path: ${{ inputs.subdir == '' && inputs.test_results_pattern || format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
         if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
         retention-days: 1
 
