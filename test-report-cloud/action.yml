@@ -13,6 +13,10 @@ inputs:
     artifact_name:  
       description: 'E2E Test output artifact name. Defaults to "e2e-html-report"'
       default: e2e-html-report
+    test_name:
+      description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'
+      required: false
+      default: ''
     subpath:
       description: 'Subpath where the artifact must be uploaded. Defaults to "tests"'
       default: tests
@@ -53,7 +57,8 @@ runs:
     - name: Upload E2E Test HTML Report
       uses: ./.github/actions/ConfigureID/gh-actions/upload-artifact-cloud
       with:
-        artifact_name: ${{ inputs.artifact_name }}
+        # artifact_name: ${{ inputs.artifact_name }}
+        artifact_name: ${{ inputs.test_name == '' && inputs.artifact_name || format('{0}-{1}', inputs.artifact_name, inputs.test_name) }}
         subpath: ${{ inputs.subpath }}
         delete_artifact: true
 

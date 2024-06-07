@@ -62,7 +62,7 @@ on:
       subdir:
         description: 'If the tests are run in a subproject of a monorepo, specify the path'
         required: false
-        default: ''
+        default: '.'
         type: string
       test_name:
         description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'
@@ -85,9 +85,10 @@ jobs:
     steps:
       - name: Prepare E2E Testing environment
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v18
+        uses: ConfigureID/gh-actions/playwright@main
         with:
           action: "prepare"
+          subdir: ${{ inputs.subdir }}
           browser: ${{ inputs.browser }}
 
           node_version: ${{ inputs.node_version }}
@@ -116,9 +117,10 @@ jobs:
     steps:
       - name: Test
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v18
+        uses: ConfigureID/gh-actions/playwright@main
         with:
           action: "test"
+          subdir: ${{ inputs.subdir }}
           shard: "${{ matrix.shard }}/${{ strategy.job-total }}"
           trace: ${{ inputs.trace }}
           browser: ${{ inputs.browser }}
@@ -136,7 +138,6 @@ jobs:
           # Only required if no shard is specified (when sharding this is required in the "merge" action)
           # test_name: ${{ inputs.test_name }}
           # test_results_pattern: ${{ inputs.test_results_pattern }}
-          # subdir: ${{ inputs.subdir }}
 
   create-report:
     name: Report
@@ -147,14 +148,14 @@ jobs:
     steps:
       - name: Merge Test Results
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v18
+        uses: ConfigureID/gh-actions/playwright@main
         with:
           action: "merge"
+          subdir: ${{ inputs.subdir }}
 
           node_version: ${{ inputs.node_version }}
           node-version-file: ${{ inputs.node-version-file }}
           source_ref: ${{ inputs.source_ref }}
-          subdir: ${{ inputs.subdir }}
           test_name: ${{ inputs.test_name }}
           test_results_pattern: ${{ inputs.test_results_pattern }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
