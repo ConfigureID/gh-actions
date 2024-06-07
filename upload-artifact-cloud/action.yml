@@ -73,6 +73,7 @@ runs:
         source_dir: tmp-upload-artifact-cloud
         namespace: ${{ inputs.namespace }}
         environment_name: ${{ inputs.environment_name }}/${{ inputs.subpath }}
+        allowed_destination: ([/]prod|[/]staging|[/]dev)([/]${{ inputs.subpath }})*$|([/](branches|releases|storybook)[/][A-Za-z0-9._%+-\/]+$)
         
         cache: ${{ inputs.cache }}
         delete: ${{ inputs.delete }}
