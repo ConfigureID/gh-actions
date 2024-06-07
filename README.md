@@ -29,7 +29,7 @@ See contents [here](.github/workflows/npm-build.yml).
 ```yaml
 jobs:
   build:
-    uses: ConfigureID/gh-actions/.github/workflows/npm-build.yml@v19
+    uses: ConfigureID/gh-actions/.github/workflows/npm-build.yml@v20
     with:
       node_version: 14
       # Directory where this project is built (some use dist, others build, etc)
@@ -144,7 +144,7 @@ jobs:
         ...
 
       - name: Build project
-        uses: ConfigureID/gh-actions/npm-build@v19
+        uses: ConfigureID/gh-actions/npm-build@v20
         with:
           node_version: 14
           # Directory where this project is built (some use dist, others build, etc)
@@ -181,7 +181,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy branch
-        uses:  ConfigureID/gh-actions/deploy@v19
+        uses:  ConfigureID/gh-actions/deploy@v20
         with:
           # Base URL where the app is deployed
           base_url: ${{ vars.BASE_URL }}
@@ -256,7 +256,7 @@ jobs:
         id: extract_branch
         
       - name: Prunes enviroment and files
-        uses: ConfigureID/gh-actions/gh-prune@v19
+        uses: ConfigureID/gh-actions/gh-prune@v20
         with:
           # Directory where the project must be deployed to
           to: branches/${{ steps.extract_branch.outputs.current_branch }}
@@ -294,7 +294,7 @@ jobs:
         ...
 
       - name: Create release
-        uses: ConfigureID/gh-actions/release@v19
+        uses: ConfigureID/gh-actions/release@v20
         with:
           # Optional. Commit reference, only used when the tag does not exist to create it
           source_ref: main
@@ -345,7 +345,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/cypress@v19
+        uses: ConfigureID/gh-actions/cypress@v20
         with:
           # Test on the branch deployment on GCP
           base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
@@ -365,7 +365,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/cypress@v19
+        uses: ConfigureID/gh-actions/cypress@v20
         with:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -410,7 +410,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/playwright@v19
+        uses: ConfigureID/gh-actions/playwright@v20
         with:
           # Test on the branch deployment on GCP
           base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
@@ -431,7 +431,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/playwright@v19
+        uses: ConfigureID/gh-actions/playwright@v20
         with:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           browser: chromium
@@ -476,7 +476,7 @@ jobs:
 
     steps:
       - name: Create reports
-        uses: ConfigureID/gh-actions/test-report-pr@v19
+        uses: ConfigureID/gh-actions/test-report-pr@v20
 
 
        - name: Something after
@@ -508,7 +508,7 @@ jobs:
 
     steps:
       - name: Upload E2E Test HTML reports
-        uses: ConfigureID/gh-actions/test-report-cloud@v19
+        uses: ConfigureID/gh-actions/test-report-cloud@v20
 
 
        - name: Something after
@@ -538,7 +538,7 @@ jobs:
 
     steps:
       - name: Get JSON "version" property value
-        uses: ConfigureID/gh-actions/get-remote-json-property@v19
+        uses: ConfigureID/gh-actions/get-remote-json-property@v20
         id: get-version
         with: 
           url: https://someurl.com/build.json
@@ -572,7 +572,7 @@ jobs:
     
     steps:
       - name: Get deployed version
-        uses: ConfigureID/gh-actions/get-version@v19
+        uses: ConfigureID/gh-actions/get-version@v20
         id: deployed-version
         with: 
           base_url: somedomain.com/apps
@@ -609,7 +609,7 @@ jobs:
     
     steps:
       - name: Get current version in staging
-        uses: ConfigureID/gh-actions/compare-version@v19
+        uses: ConfigureID/gh-actions/compare-version@v20
         id: compare-version
         with: 
           version: v1.4.3
@@ -649,7 +649,7 @@ jobs:
         ...
 
       - name: Upload artifact as release asset
-        uses: ConfigureID/gh-actions/attach-release-artifact@v19
+        uses: ConfigureID/gh-actions/attach-release-artifact@v20
         with:
           release_name: v1.4.3
           filename: imp-adidas-v1.4.3
