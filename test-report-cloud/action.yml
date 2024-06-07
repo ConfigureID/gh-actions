@@ -58,7 +58,7 @@ runs:
       uses: ./.github/actions/ConfigureID/gh-actions/upload-artifact-cloud
       with:
         # artifact_name: ${{ inputs.artifact_name }}
-        artifact_name: ${{ inputs.artifact_name }}${{ inputs.test_name == '' && '' || format('-{0}', inputs.test_name) }}
+        artifact_name: ${{ inputs.test_name == '' && inputs.artifact_name || format('{0}-{1}', inputs.artifact_name, inputs.test_name) }}
         subpath: ${{ inputs.subpath }}
         delete_artifact: true
 
