@@ -114,6 +114,29 @@ runs:
       with:
         args: unzip -qq ${{ steps.mode.outputs.artifact_name }} -d ./tmp
 
+    - name: Add publish info to project metadata JSON
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const path = require('path');
+          const fs = require('fs');
+          try {
+            const file = path.resolve('tmp', 'metadata.json');
+            if (fs.existsSync(file)) {
+              const metadata = JSON.parse(fs.readFileSync(file, 'utf-8'));
+              metadata.publish = {
+                ci: true,
+                date: new Date().toJSON(),
+                user: process.env.GITHUB_TRIGGERING_ACTOR ?? context.actor,
+                runId: context.runId
+              };
+              fs.writeFileSync(file, JSON.stringify(metadata, null, 2));
+            }
+          } catch(err) {
+            core.error(`Error while adding publish info to metadata.json: ${err}`)
+            core.setFailed(`Action failed with error ${err}`)
+          }
+
     # Copies the current action's repository to the specified location, 
     # so other actions from the same repo may be called (see sync below)
     # This allows us to use the same version of the action for both "deploy" (the current action) and sync
