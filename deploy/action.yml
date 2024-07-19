@@ -114,6 +114,7 @@ runs:
       with:
         args: unzip -qq ${{ steps.mode.outputs.artifact_name }} -d ./tmp
 
+    # Loads metadata.json and adds the current CI run information a "publish info"
     - name: Add publish info to project metadata JSON
       uses: actions/github-script@v7
       with:
@@ -131,6 +132,7 @@ runs:
                 runId: context.runId
               };
               fs.writeFileSync(file, JSON.stringify(metadata, null, 2));
+              core.info('Added publish info to metadata.json')
             }
           } catch(err) {
             core.error(`Error while adding publish info to metadata.json: ${err}`)
