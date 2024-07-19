@@ -85,7 +85,7 @@ jobs:
     steps:
       - name: Prepare E2E Testing environment
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v20
+        uses: ConfigureID/gh-actions/playwright@FETI-106_publish_junit
         with:
           action: "prepare"
           subdir: ${{ inputs.subdir }}
@@ -117,7 +117,7 @@ jobs:
     steps:
       - name: Test
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v20
+        uses: ConfigureID/gh-actions/playwright@FETI-106_publish_junit
         with:
           action: "test"
           subdir: ${{ inputs.subdir }}
@@ -148,7 +148,7 @@ jobs:
     steps:
       - name: Merge Test Results
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v20
+        uses: ConfigureID/gh-actions/playwright@FETI-106_publish_junit
         with:
           action: "merge"
           subdir: ${{ inputs.subdir }}
