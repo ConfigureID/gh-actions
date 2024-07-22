@@ -168,14 +168,6 @@ runs:
         path: ${{ inputs.subdir }}/blob-report
         retention-days: 1
 
-    - name: Upload HTML Report
-      uses: actions/upload-artifact@v4
-      if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
-      with:
-        name: ${{ inputs.test_name == '' && 'e2e-html-report' || format('e2e-html-report-{0}', inputs.test_name) }}
-        path: ${{ inputs.subdir }}/e2e/results/report/
-        retention-days: 1
-
     - name: Upload JUnit Report 
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
@@ -183,6 +175,20 @@ runs:
         name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
         path: ${{ format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }}
         if-no-files-found: ignore # 'warn' or 'error' are also available, defaults to `warn`
+        retention-days: 1
+
+    # Creates a subdir inside the HTML Report called "junit" and save the xml there
+    - name: Copy JUnit files to HTML Report
+      if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
+      shell: bash
+      run: mkdir -p ${{ inputs.subdir }}/e2e/results/report/xml && cp ${{ format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }} ${{ inputs.subdir }}/e2e/results/report/xml
+
+    - name: Upload HTML Report
+      uses: actions/upload-artifact@v4
+      if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
+      with:
+        name: ${{ inputs.test_name == '' && 'e2e-html-report' || format('e2e-html-report-{0}', inputs.test_name) }}
+        path: ${{ inputs.subdir }}/e2e/results/report/
         retention-days: 1
 
     - name: Delete Blob report after merge
