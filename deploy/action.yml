@@ -107,10 +107,20 @@ runs:
         file: ${{ steps.mode.outputs.artifact_name }}
         token: ${{ inputs.github_token }}
 
+    # Copies the current action's repository to the specified location, 
+    # so other actions from the same repo may be called (see sync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and sync
+    - name: Copy custom action repository
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
     - name: Unzip release
       # If "promote release" mode, decompress the release asset
       if: ${{ inputs.release != '' }}
-      uses: montudor/action-zip@v1
+      uses: ./.github/actions/ConfigureID/gh-actions/zip
       with:
         args: unzip -qq ${{ steps.mode.outputs.artifact_name }} -d ./tmp
 
@@ -138,16 +148,6 @@ runs:
             core.error(`Error while adding publish info to metadata.json: ${err}`)
             core.setFailed(`Action failed with error ${err}`)
           }
-
-    # Copies the current action's repository to the specified location, 
-    # so other actions from the same repo may be called (see sync below)
-    # This allows us to use the same version of the action for both "deploy" (the current action) and sync
-    - name: Copy custom action repository
-      shell: bash
-      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
-      env:
-        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
-        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
     # Sync to Cloud Service
     - name: Sync to Cloud Service
