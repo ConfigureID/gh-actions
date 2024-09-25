@@ -53,7 +53,7 @@ inputs:
   exclude:
     description: 'Regrex expression to exclude files'
     required: false
-    default: '.*\.md$|\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
+    default: '\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
   delete:
     description: 'Delete extra files in the destination not found in the source'
     required: false
