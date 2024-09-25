@@ -75,7 +75,7 @@ jobs:
     steps:
       - name: Test
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v22
+        uses: ConfigureID/gh-actions/playwright@v23
         with:
           action: "test"
           trace: ${{ inputs.trace }}
