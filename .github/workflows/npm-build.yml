@@ -14,10 +14,10 @@ on:
       NPM_TOKEN:
         required: false
     inputs:
-      node_version:  
+      node_version:
         description: 'Node.js version to use'
         type: string
-      node-version-file:  
+      node-version-file:
         description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
         type: string
         default: '.node-version'
@@ -34,6 +34,11 @@ on:
         required: false
         default: build-output
         type: string
+      package:
+        description: 'Whether the uploaded artifact should be the dist dir (false) or the tarball generated with npm pack (true). Defaults to false'
+        required: false
+        default: false
+        type: boolean
       test:
         description: 'Indicates if npm run test should be called before the build command'
         required: false
@@ -86,7 +91,7 @@ jobs:
         shell: bash
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        
+
       - name: Run tests
         if: ${{ inputs.test == true }}
         run: npm run test
@@ -96,11 +101,20 @@ jobs:
         run: npm run ${{ inputs.npm_script }}
         shell: bash
 
-      - name: Upload production-ready build files
+      - name: Create the NPM package
+        if: ${{ inputs.package == true }}
+        id: pack
+        shell: bash
+        run: |
+          TAR_NAME=$(npm pack --ignore-scripts --silent)
+          echo "tarball=$TAR_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload application files or NPM package
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
-          path: ./${{ inputs.dist_dir }}
+          path: ./${{ inputs.package == true && steps.pack.outputs.tarball || inputs.dist_dir }}
+          compression-level: ${{ inputs.package == true && 0 || 6 }}
           retention-days: 1
 
       - name: Upload test results
