@@ -13,9 +13,13 @@ inputs:
     required: false
     default: ''
   artifact_name:
-    description: 'The name of the artifact created in a previous step or the release asset. If not specified, build-output is used'
+    description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
     default: build-output
+  release_asset:
+    description: 'The name of the release tgz asset. If not specified, "<repo>-<version>.tgz" is used'
+    required: false
+    default: ''
   package_tag:
     description: 'Package tag. If not defined, "latest" is used'
     required: false
@@ -38,7 +42,7 @@ runs:
       uses: dsaltares/fetch-gh-release-asset@1.1.0
       with:
         version: 'tags/${{ inputs.release }}'
-        file: ${{ format('{0}-{1}.tgz', github.event.repository.name, inputs.release) }}
+        file: ${{ inputs.release_asset != '' &&  inputs.release_asset  || format('{0}-{1}', github.event.repository.name, inputs.release) }}.tgz
         token: ${{ inputs.github_token }}
         target: 'tmp/release.tgz'
 
