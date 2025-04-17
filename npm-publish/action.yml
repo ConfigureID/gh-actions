@@ -11,6 +11,10 @@ inputs:
   token:
     description: 'NPM Token with Automated publish permission'
     required: true
+  github_token:
+    description: 'GitHub token with permissions to push to the gh-pages branch'
+    required: false
+    default: ${{ github.token }}
   release:
     description: 'If defined, the name of the release (eg. v1.4.3) that will be published. If not defined, an artifact build from a previous step is used'
     required: false
