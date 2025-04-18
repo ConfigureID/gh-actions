@@ -8,7 +8,7 @@ description: 'Publish package to NPM'
 # - Determines the filename of the tgz
 # - Calls npm publish with that tgz package, optionally adding a tag (if empty it uses "latest")
 inputs:
-  token:
+  npm_publish_token:
     description: 'NPM Token with Automated publish permission'
     required: true
   github_token:
@@ -74,7 +74,7 @@ runs:
     - name: Publish to NPM
       shell: bash
       env:
-        NODE_AUTH_TOKEN: ${{ inputs.token }}
+        NODE_AUTH_TOKEN: ${{ inputs.npm_publish_token }}
       run: |
         if [ -n "${{ inputs.package_tag }}" ]; then
           npm publish ./tmp/${{ steps.get_filename.outputs.file_name }} --access=restricted --tag ${{ inputs.package_tag }}

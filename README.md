@@ -23,13 +23,14 @@ See contents [here](.github/workflows/npm-build.yml).
 - Installs dependencies (npm ci)
 - Runs Tests
 - Builds transpiled/minified output
+- If the project is an NPM library, it generates the package using `npm pack`
 - Uploads the artifact so the next steps can use it
 
 **Usage**
 ```yaml
 jobs:
   build:
-    uses: ConfigureID/gh-actions/.github/workflows/npm-build.yml@v23
+    uses: ConfigureID/gh-actions/.github/workflows/npm-build.yml@v24
     with:
       node_version: 14
       # Directory where this project is built (some use dist, others build, etc)
@@ -38,6 +39,8 @@ jobs:
       source_ref: main
       # Optional. Name to use when uploading the resulting artifact (defaults to build-output)
       artifact_name: build-output
+      # Optional. Indicates if the project is an NPM package (default to false)
+      package: true
 ```
 
 ### Playwright E2E Testing - Simple
@@ -144,7 +147,7 @@ jobs:
         ...
 
       - name: Build project
-        uses: ConfigureID/gh-actions/npm-build@v23
+        uses: ConfigureID/gh-actions/npm-build@v24
         with:
           node_version: 14
           # Directory where this project is built (some use dist, others build, etc)
@@ -181,7 +184,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy branch
-        uses:  ConfigureID/gh-actions/deploy@v23
+        uses:  ConfigureID/gh-actions/deploy@v24
         with:
           # Base URL where the app is deployed
           base_url: ${{ vars.BASE_URL }}
@@ -256,7 +259,7 @@ jobs:
         id: extract_branch
         
       - name: Prunes enviroment and files
-        uses: ConfigureID/gh-actions/gh-prune@v23
+        uses: ConfigureID/gh-actions/gh-prune@v24
         with:
           # Directory where the project must be deployed to
           to: branches/${{ steps.extract_branch.outputs.current_branch }}
@@ -294,7 +297,7 @@ jobs:
         ...
 
       - name: Create release
-        uses: ConfigureID/gh-actions/release@v23
+        uses: ConfigureID/gh-actions/release@v24
         with:
           # Optional. Commit reference, only used when the tag does not exist to create it
           source_ref: main
@@ -345,7 +348,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/cypress@v23
+        uses: ConfigureID/gh-actions/cypress@v24
         with:
           # Test on the branch deployment on GCP
           base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
@@ -365,7 +368,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/cypress@v23
+        uses: ConfigureID/gh-actions/cypress@v24
         with:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -410,7 +413,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/playwright@v23
+        uses: ConfigureID/gh-actions/playwright@v24
         with:
           # Test on the branch deployment on GCP
           base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
@@ -431,7 +434,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/playwright@v23
+        uses: ConfigureID/gh-actions/playwright@v24
         with:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           browser: chromium
@@ -476,7 +479,7 @@ jobs:
 
     steps:
       - name: Create reports
-        uses: ConfigureID/gh-actions/test-report-pr@v23
+        uses: ConfigureID/gh-actions/test-report-pr@v24
 
 
        - name: Something after
@@ -508,7 +511,7 @@ jobs:
 
     steps:
       - name: Upload E2E Test HTML reports
-        uses: ConfigureID/gh-actions/test-report-cloud@v23
+        uses: ConfigureID/gh-actions/test-report-cloud@v24
 
 
        - name: Something after
@@ -538,7 +541,7 @@ jobs:
 
     steps:
       - name: Get JSON "version" property value
-        uses: ConfigureID/gh-actions/get-remote-json-property@v23
+        uses: ConfigureID/gh-actions/get-remote-json-property@v24
         id: get-version
         with: 
           url: https://someurl.com/build.json
@@ -572,7 +575,7 @@ jobs:
     
     steps:
       - name: Get deployed version
-        uses: ConfigureID/gh-actions/get-version@v23
+        uses: ConfigureID/gh-actions/get-version@v24
         id: deployed-version
         with: 
           base_url: somedomain.com/apps
@@ -609,7 +612,7 @@ jobs:
     
     steps:
       - name: Get current version in staging
-        uses: ConfigureID/gh-actions/compare-version@v23
+        uses: ConfigureID/gh-actions/compare-version@v24
         id: compare-version
         with: 
           version: v1.4.3
@@ -628,14 +631,20 @@ jobs:
 
 ### Attach build artifact to release
 
-> Given an artifact (defaults to `build-output`), a release name (tag) and filename, uploads and attaches the artifact as a zip file to the release. 
+> Given an artifact (defaults to `build-output`), a release name (tag) and filename, uploads and attaches the artifact to the release. 
+
+- If the artifact contains multiple files, it will generate a zip file with the contents.
+- If the artifact contains a single file, it will rename it to the specified filename (with the source file extension) and upload that file
+
+Using the `dir` property, the first behavior can be **forced** on single-file artifacts as well.
 
 See contents [here](attach-release-artifact/action.yml).
 
 **Steps**
 - Download the build artifact by name (defaults to `build-output`) to a temp directory
-- Creates a zip file from the temp directory using the provided `filename`
-- Uploads and attaches the zip file to the list of release assets
+- Mutiple files: Creates a zip file from the temp directory using the provided `filename`
+- Single file: Rename the artifact to `filename.<artifact-extension>`
+- Uploads and attaches the resulting file to the list of release assets
 
 **Usage**
 ```yaml
@@ -649,8 +658,40 @@ jobs:
         ...
 
       - name: Upload artifact as release asset
-        uses: ConfigureID/gh-actions/attach-release-artifact@v23
+        uses: ConfigureID/gh-actions/attach-release-artifact@v24
         with:
           release_name: v1.4.3
           filename: imp-adidas-v1.4.3
+```
+
+### Publish package to NPM
+
+> Publishes the built package to NPM
+
+It can publish a build created on a previous step or an existing release.
+
+**It requires the npm publish token (not the readonly one)**
+
+See contents [here](npm-publish/action.yml).
+
+**Steps**
+- Downloads an npm package artifact from a previous step OR from an asset of an existing release.
+- Determines the filename of the tgz
+- Calls npm publish with that tgz package, optionally adding a tag (if empty it uses "latest")
+
+**Usage**
+```yaml
+jobs:
+   read-version:
+    name: Upload artifact as release asset
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Create build artifact
+        ...
+
+      - uses: ConfigureID/gh-actions/npm-publish@v24
+        with:
+          release: ${{ github.event.release.tag_name }}
+          npm_publish_token: ${{ secrets.NPM_PUBLISH_TOKEN }}
 ```
