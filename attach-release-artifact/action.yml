@@ -7,7 +7,7 @@ description: 'Attach an artifact to the provided release'
 # - Compresses files
 # - Attaches the zipped artifact to the release
 inputs:
-  filename:  
+  filename:
     description: 'Name of the release file'
     required: true
   release_name:
@@ -17,6 +17,10 @@ inputs:
     description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
     required: false
     default: build-output
+  dir:
+    description: 'If true, the artifact will always be handled like a directory, even if it is only one file'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -27,18 +31,48 @@ runs:
         name: ${{ inputs.artifact_name }}
         path: ./tmp
 
+    - name: Count artifact files
+      if: inputs.dir == 'false'
+      id: count_files
+      shell: bash
+      run: |
+        FILE_COUNT=$(find ./tmp -type f | wc -l)
+
+        echo "Artifact files count: $FILE_COUNT"
+        echo "file_count=$FILE_COUNT" >> "$GITHUB_OUTPUT"
+
     - name: Install zip
+      if: steps.count_files.outputs.file_count != '1'
       uses: montudor/action-zip@v1
 
     - name: Compress files
       shell: bash
+      if: steps.count_files.outputs.file_count != '1'
       run: zip -qq -r ../${{ inputs.filename }}.zip .
       working-directory: ./tmp
+
+    - name: Get single file name and extension
+      if: steps.count_files.outputs.file_count == '1'
+      id: get_filename
+      shell: bash
+      run: |
+        FILE_NAME=$(ls ./tmp)
+        FILE_EXT="${FILE_NAME##*.}"
+
+        echo "Single file name: $FILE_NAME"
+        echo "File extension: $FILE_EXT"
+
+        echo "file_name=$FILE_NAME" >> "$GITHUB_OUTPUT"
+        echo "file_ext=$FILE_EXT" >> "$GITHUB_OUTPUT"
+
+    - name: Rename file
+      shell: bash
+      if: steps.count_files.outputs.file_count == '1'
+      run: mv ./tmp/${{ steps.get_filename.outputs.file_name }} ./${{ inputs.filename }}.${{ steps.get_filename.outputs.file_ext }}
 
     - name: Attach artifact to release
       shell: bash
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      run: gh release upload ${{ inputs.release_name }} ./${{ inputs.filename }}.zip --repo ${{ github.repository }}
+      run: gh release upload ${{ inputs.release_name }} ./${{ inputs.filename }}.${{ steps.get_filename.outputs.file_ext || 'zip' }} --repo ${{ github.repository }}
 
-        

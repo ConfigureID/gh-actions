@@ -1,0 +1,84 @@
+name: 'NPM Publish'
+description: 'Publish package to NPM'
+
+# Publishes the built package to NPM
+# It can publish a build created on a previous step or an existing release.
+# Steps:
+# - Downloads an npm package artifact from a previous step OR from an asset of an existing release.
+# - Determines the filename of the tgz
+# - Calls npm publish with that tgz package, optionally adding a tag (if empty it uses "latest")
+inputs:
+  npm_publish_token:
+    description: 'NPM Token with Automated publish permission'
+    required: true
+  github_token:
+    description: 'GitHub token with permissions to push to the gh-pages branch'
+    required: false
+    default: ${{ github.token }}
+  node_version:
+    description: 'Node.js version to use'
+    default: 'latest'
+  release:
+    description: 'If defined, the name of the release (eg. v1.4.3) that will be published. If not defined, an artifact build from a previous step is used'
+    required: false
+    default: ''
+  artifact_name:
+    description: 'The name of the artifact created in a previous step. If not specified, build-output is used'
+    required: false
+    default: build-output
+  release_asset:
+    description: 'The name of the release tgz asset. If not specified, "<repo>-<version>.tgz" is used'
+    required: false
+    default: ''
+  package_tag:
+    description: 'Package tag. If not defined, "latest" is used'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download build artifact
+      # If "publish build" mode, download the built artifact from a previous step
+      if: ${{ inputs.release == '' }}
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ./tmp
+
+    - name: Download release asset
+      # If "publish release" mode, download the compressed asset from the release
+      if: ${{ inputs.release != '' }}
+      uses: dsaltares/fetch-gh-release-asset@1.1.0
+      with:
+        version: 'tags/${{ inputs.release }}'
+        file: ${{ inputs.release_asset != '' &&  inputs.release_asset  || format('{0}-{1}', github.event.repository.name, inputs.release) }}.tgz
+        token: ${{ inputs.github_token }}
+        target: 'tmp/release.tgz'
+
+    # Get the filename to upload from the tmp dir
+    - name: Get artifact file name
+      id: get_filename
+      shell: bash
+      run: |
+        FILE_NAME=$(ls ./tmp)
+        echo "Tar filename to publish: $FILE_NAME"
+        echo "file_name=$FILE_NAME" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node_version }}
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Publish to NPM
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.npm_publish_token }}
+      run: |
+        if [ -n "${{ inputs.package_tag }}" ]; then
+          npm publish ./tmp/${{ steps.get_filename.outputs.file_name }} --access=restricted --tag ${{ inputs.package_tag }}
+        else
+          npm publish ./tmp/${{ steps.get_filename.outputs.file_name }} --access=restricted
+        fi
+
