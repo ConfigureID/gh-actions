@@ -45,7 +45,7 @@ inputs:
     required: false
     default: '[/]prod$|[/]staging$|[/]dev$|([/](branches|releases)[/][A-Za-z0-9._%+-\/]+$)'
   exclude:
-    description: 'Regrex expression to exclude files'
+    description: 'Regex expression to exclude files'
     required: false
     default: '\.gitignore$|\.git/.*$|gha-creds-+\w+\.+json*$|\.github/.*$'
   delete:
@@ -61,7 +61,7 @@ runs:
 
   steps:
     - name: Start deployment
-      uses: bobheadxi/deployments@v1.3.0
+      uses: bobheadxi/deployments@v1.5.0
       id: deployment
       with:
         step: start
@@ -111,7 +111,7 @@ runs:
 
     - name: Update deployment status
       if: always()
-      uses: bobheadxi/deployments@v1.3.0
+      uses: bobheadxi/deployments@v1.5.0
       with:
         step: finish
         token: ${{ inputs.github_token }}

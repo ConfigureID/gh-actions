@@ -22,5 +22,27 @@ runs:
     - shell: bash
       id: get-property
       run: |
-        curl ${{ inputs.url }} > $HOME/tmp_get_prop_action.json
-        echo "value=$(jq -r '.${{ inputs.property }}' $HOME/tmp_get_prop_action.json)" >> $GITHUB_OUTPUT
+        set -euo pipefail
+
+        # Create secure temporary file
+        TMP_FILE=$(mktemp)
+        trap 'rm -f "$TMP_FILE"' EXIT
+
+        # Download with proper error handling and retry logic
+        if ! curl -fsSL --retry 3 --retry-delay 2 "${{ inputs.url }}" -o "$TMP_FILE"; then
+          echo "::error::Failed to download JSON file from ${{ inputs.url }}"
+          exit 1
+        fi
+
+        # Validate JSON and extract property
+        if ! jq -e . "$TMP_FILE" >/dev/null 2>&1; then
+          echo "::error::Downloaded file is not valid JSON"
+          exit 1
+        fi
+
+        VALUE=$(jq -r '.${{ inputs.property }}' "$TMP_FILE")
+        if [ "$VALUE" = "null" ]; then
+          echo "::warning::Property '${{ inputs.property }}' not found in JSON or is null"
+        fi
+
+        echo "value=$VALUE" >> $GITHUB_OUTPUT

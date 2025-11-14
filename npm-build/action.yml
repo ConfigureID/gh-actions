@@ -67,7 +67,7 @@ runs:
       with:
         path: |
           node_modules
-        key: modules-${{ hashFiles('package-lock.json') }}
+        key: ${{ runner.os }}-node-${{ inputs.node_version || hashFiles(inputs.node-version-file) }}-modules-${{ hashFiles('package-lock.json') }}
 
     - name: Install NPM packages
       if: steps.cache-node-modules.outputs.cache-hit != 'true'

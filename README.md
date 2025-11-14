@@ -78,7 +78,7 @@ jobs:
 
 > Runs E2E tests using Playwright in parallel on multiple VMs (matrix execution strategy)
 
-See contents [here](.github/workflows/playwright-shareded.yml).
+See contents [here](.github/workflows/playwright-sharded.yml).
 
  It uses 3 jobs, because:
 - The first one run on a single VM and prepares the execution by installing/caching dependencies and setting up the matrix parameters
@@ -167,7 +167,7 @@ jobs:
 
 It can **DEPLOY a build** created on a previous step or **PROMOTE an existing release** to an specified environment (eg. integration, staging, production).
 
-See contents [here](gh-deploy/action.yml).
+See contents [here](deploy/action.yml).
 
 **Steps**
 - Creates a Github Deployment object with status "start" and the name
@@ -238,7 +238,7 @@ jobs:
 
 Useful for example when a PR is closed and the associated deployment is not required anymore.
 
-See contents [here](gh-prune/action.yml).
+See contents [here](prune/action.yml).
 
 **Steps**
 - Disables the Github Environment object

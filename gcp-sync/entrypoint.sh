@@ -1,8 +1,16 @@
 #!/bin/bash
+set -euo pipefail
+
+# Create secure temporary file for credentials
+SECRETS_FILE=$(mktemp)
+chmod 600 "$SECRETS_FILE"
+
+# Ensure cleanup on exit
+trap 'rm -f "$SECRETS_FILE"' EXIT
+
 # Auth
-echo "$INPUT_CLOUD_CREDENTIALS" > /secrets.json
-gcloud auth activate-service-account --key-file=/secrets.json
-rm /secrets.json
+echo "$INPUT_CLOUD_CREDENTIALS" > "$SECRETS_FILE"
+gcloud auth activate-service-account --key-file="$SECRETS_FILE"
 
 # Delete Files
 if [[ $INPUT_DELETE == "true" ]]; then
@@ -37,10 +45,13 @@ else
 
     # Syncing files to bucket
     echo "Syncing bucket $INPUT_CLOUD_BUCKET ..."
-    echo gsutil -m $CACHE_OPTIONS rsync -r -c $DELETE_OPTION -x '$INPUT_EXCLUDE' /github/workspace/$INPUT_PATH gs://$INPUT_CLOUD_BUCKET/$INPUT_TO | bash
 
-    if [ $? -ne 0 ]; then
-        echo "::error::Syncing failed" && exit 1
+    # Build and execute gsutil command directly (avoid command injection)
+    if [[ -n "$CACHE_OPTIONS" ]]; then
+        gsutil -m -h "Cache-Control:no-store" rsync -r -c ${DELETE_OPTION} -x "$INPUT_EXCLUDE" "/github/workspace/$INPUT_PATH" "gs://$INPUT_CLOUD_BUCKET/$INPUT_TO"
+    else
+        gsutil -m rsync -r -c ${DELETE_OPTION} -x "$INPUT_EXCLUDE" "/github/workspace/$INPUT_PATH" "gs://$INPUT_CLOUD_BUCKET/$INPUT_TO"
     fi
+
     echo "Done."
 fi
