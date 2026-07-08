@@ -93,7 +93,7 @@ runs:
     - name: Download build artifact
       # If "deploy build" mode, download the built artifact from a previous step
       if: ${{ inputs.release == '' }}
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: ${{ steps.mode.outputs.artifact_name }}
         path: ./tmp
@@ -126,7 +126,7 @@ runs:
 
     # Loads metadata.json and adds the current CI run information a "publish info"
     - name: Add publish info to project metadata JSON
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           const path = require('path');

@@ -41,7 +41,7 @@ runs:
     - name: Download build artifact
       # If "publish build" mode, download the built artifact from a previous step
       if: ${{ inputs.release == '' }}
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: ${{ inputs.artifact_name }}
         path: ./tmp
@@ -66,10 +66,11 @@ runs:
         echo "file_name=$FILE_NAME" >> "$GITHUB_OUTPUT"
 
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node_version }}
         registry-url: 'https://registry.npmjs.org'
+        package-manager-cache: false
 
     - name: Publish to NPM
       shell: bash

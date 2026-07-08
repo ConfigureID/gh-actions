@@ -50,19 +50,20 @@ runs:
   using: "composite"
   steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         ref: ${{ inputs.source_ref }}
 
     - name: Install Node.js and Restore Cache
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node_version }}
         node-version-file: ${{ inputs.node-version-file }}
         registry-url: "https://registry.npmjs.org"
+        package-manager-cache: false
 
     - name: Cache node_modules
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cache-node-modules
       with:
         path: |
@@ -86,7 +87,7 @@ runs:
       shell: bash
 
     - name: Upload production-ready build files
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.artifact_name }}
         path: ./${{ inputs.dist_dir }}
@@ -94,7 +95,7 @@ runs:
 
     - name: Upload test results
       if: ${{ always() && inputs.test == 'true' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.test_name == '' && 'test-output-unit' || format('test-output-unit-{0}', inputs.test_name) }}
         path: |
