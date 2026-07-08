@@ -1,0 +1,24 @@
+# Keeps the actions used by the reusable workflows, the composite actions
+# and the Docker base images up to date.
+version: 2
+updates:
+  # Covers .github/workflows and the repo root.
+  # The "/*" glob covers the composite actions defined in subdirectories
+  # (deploy, sync, playwright, etc), which Dependabot does not scan by default.
+  - package-ecosystem: github-actions
+    directories:
+      - "/"
+      - "/*"
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: docker
+    directories:
+      - "/gcp-sync"
+      - "/zip"
+    schedule:
+      interval: weekly
