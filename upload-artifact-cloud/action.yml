@@ -85,7 +85,7 @@ runs:
     
     - name: Delete Blob report after merge
       if: inputs.delete_artifact == 'true'
-      uses: geekyeggo/delete-artifact@v5
+      uses: geekyeggo/delete-artifact@v6
       with:
           name: ${{ inputs.artifact_name }}
           failOnError: false

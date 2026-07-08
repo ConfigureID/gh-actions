@@ -194,7 +194,7 @@ runs:
 
     - name: Delete Blob report after merge
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
-      uses: geekyeggo/delete-artifact@v5
+      uses: geekyeggo/delete-artifact@v6
       with:
           name: ${{ inputs.test_name == '' && 'blob-report' || format('blob-report-{0}', inputs.test_name) }}-*
           failOnError: false

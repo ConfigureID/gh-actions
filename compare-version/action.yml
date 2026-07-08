@@ -73,7 +73,7 @@ runs:
 
     - name: Compare provided version with the one deployed
       # Compares the specified version with the one retrieved from the deployment
-      uses: madhead/semver-utils@v3
+      uses: madhead/semver-utils@v5
       id: compare
       with:
         version:  ${{ inputs.version }}

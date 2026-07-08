@@ -82,7 +82,7 @@ runs:
         fi
 
     - name: Start build deployment
-      uses: bobheadxi/deployments@v1
+      uses: bobheadxi/deployments@v1.5.0
       id: deployment
       with:
         step: start
@@ -101,7 +101,7 @@ runs:
     - name: Download release asset
       # If "promote release" mode, download the compressed asset from the release
       if: ${{ inputs.release != '' }}
-      uses: dsaltares/fetch-gh-release-asset@1.1.0
+      uses: dsaltares/fetch-gh-release-asset@1.1.2
       with:
         version: 'tags/${{ inputs.release }}'
         file: ${{ steps.mode.outputs.artifact_name }}
@@ -170,7 +170,7 @@ runs:
     
     - name: Update deployment status
       if: always()
-      uses: bobheadxi/deployments@v1
+      uses: bobheadxi/deployments@v1.5.0
       with:
         step: finish
         token: ${{ inputs.github_token }}
