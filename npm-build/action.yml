@@ -77,7 +77,7 @@ runs:
         NODE_AUTH_TOKEN: ${{ inputs.npm_token }}
 
     - name: Run tests
-      if: ${{ inputs.test == "true" }}
+      if: ${{ inputs.test == 'true' }}
       run: npm run test
       shell: bash
 
@@ -93,7 +93,7 @@ runs:
         retention-days: 1
 
     - name: Upload test results
-      if: ${{ always() && inputs.test == "true" }}
+      if: ${{ always() && inputs.test == 'true' }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.test_name == '' && 'test-output-unit' || format('test-output-unit-{0}', inputs.test_name) }}
