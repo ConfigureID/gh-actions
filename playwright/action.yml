@@ -76,20 +76,21 @@ runs:
   steps:
     - name: Checkout code
       if: "${{ inputs.checkout_code == 'true' }}"
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         ref: ${{ inputs.source_ref }}
 
     - name: Install Node.js and Restore Cache
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node_version }}
         node-version-file: ${{ inputs.node-version-file }}
         registry-url: "https://registry.npmjs.org"
+        package-manager-cache: false
 
     - name: Cache Playwright
       if: inputs.action == 'prepare' || inputs.action == 'test'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cache-playwright
       with:
         # If action is "prepare", we don't need playwright, just to check if they exist or download them if not
@@ -99,7 +100,7 @@ runs:
         key: playwright-${{ inputs.browser }}-${{ hashFiles('package-lock.json') }}
 
     - name: Cache node_modules
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cache-node-modules
       with:
         # If action is "prepare" and playwright browsers are cached, we don't need the modules, just to check if they exist or download them if not
@@ -124,7 +125,7 @@ runs:
 
     - name: Download blob reports from GitHub Actions Artifacts
       if: inputs.action == 'merge'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         path: ${{ inputs.subdir }}/e2e-blob-reports
         pattern: ${{ inputs.test_name == '' && 'blob-report' || format('blob-report-{0}', inputs.test_name) }}-*
@@ -138,7 +139,7 @@ runs:
 
     - name: Download artifact
       if: "${{ inputs.action == 'test' && inputs.base_url == '' }}"
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: ${{ inputs.artifact_name }}
         path: ${{ inputs.subdir }}/${{ inputs.dist_dir }}
@@ -162,14 +163,14 @@ runs:
 
     - name: Upload report
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard != ''
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: blob-report-${{ inputs.test_name == '' && matrix.shard || format('{0}-{1}', inputs.test_name, matrix.shard) }}
         path: ${{ inputs.subdir }}/blob-report
         retention-days: 1
 
     - name: Upload JUnit Report 
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
       with:
         name: ${{ inputs.test_name == '' && 'test-output-e2e' || format('test-output-e2e-{0}', inputs.test_name) }}
@@ -184,7 +185,7 @@ runs:
       run: mkdir -p ${{ inputs.subdir }}/e2e/results/report/xml && cp ${{ format('{0}/{1}', inputs.subdir, inputs.test_results_pattern) }} ${{ inputs.subdir }}/e2e/results/report/xml
 
     - name: Upload HTML Report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
       with:
         name: ${{ inputs.test_name == '' && 'e2e-html-report' || format('e2e-html-report-{0}', inputs.test_name) }}
@@ -193,7 +194,7 @@ runs:
 
     - name: Delete Blob report after merge
       if: always() && !cancelled() && inputs.action != 'prepare' && inputs.shard == ''
-      uses: geekyeggo/delete-artifact@v5
+      uses: geekyeggo/delete-artifact@v6
       with:
           name: ${{ inputs.test_name == '' && 'blob-report' || format('blob-report-{0}', inputs.test_name) }}-*
           failOnError: false
