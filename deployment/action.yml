@@ -1,0 +1,70 @@
+name: 'Github Deployment'
+description: 'Creates, finishes or removes Github Deployments and their statuses'
+
+# Manages Github Deployments using the Github API (via actions/github-script).
+# Internal replacement for bobheadxi/deployments (no third party action, no pinned node runtime).
+# Only the steps and inputs used across this repo are supported.
+# Steps:
+# - start: creates a deployment for the environment and marks it as "in_progress"
+# - finish: sets the final status of an existing deployment (and its environment URL)
+# - delete-env: deletes every deployment of the environment and the environment itself
+inputs:
+  step:
+    description: 'One of "start", "finish" or "delete-env"'
+    required: true
+  token:
+    description: 'Github token used to manage the deployments'
+    required: false
+    default: ${{ github.token }}
+  env:
+    description: 'The name of the deployment environment'
+    required: true
+  ref:
+    description: 'The git ref to use for the deployment ("start" only, defaults to the workflow ref)'
+    required: false
+    default: ''
+  desc:
+    description: 'Description to set on the deployment/status'
+    required: false
+    default: ''
+  deployment_id:
+    description: 'The deployment id to update (required by "finish")'
+    required: false
+    default: ''
+  status:
+    description: 'The deployment status (required by "finish")'
+    required: false
+    default: ''
+  env_url:
+    description: 'The environment URL, set on the status when "finish" succeeds'
+    required: false
+    default: ''
+
+outputs:
+  deployment_id:
+    description: 'The id of the created deployment ("start" only)'
+    value: ${{ steps.deployment.outputs.deployment_id }}
+  env:
+    description: 'The name of the deployment environment ("start" only, for ease of reference)'
+    value: ${{ steps.deployment.outputs.env }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Manage Github Deployment
+      id: deployment
+      uses: actions/github-script@v9
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        STEP: ${{ inputs.step }}
+        ENV_NAME: ${{ inputs.env }}
+        REF: ${{ inputs.ref }}
+        DESC: ${{ inputs.desc }}
+        DEPLOYMENT_ID: ${{ inputs.deployment_id }}
+        STATUS: ${{ inputs.status }}
+        ENV_URL: ${{ inputs.env_url }}
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const script = require(`${process.env.ACTION_PATH}/deployment.js`);
+          await script({ github, context, core });

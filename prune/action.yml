@@ -68,11 +68,11 @@ runs:
         NAMESPACE: ${{ inputs.namespace }}
         ENVIRONMENT_NAME: ${{ inputs.environment_name }}
 
-    # Copies the current action's repository to the specified location, 
-    # so other actions from the same repo may be called (see gcp-run below)
-    # This allows us to use the same version of the action for both "deploy" (the current action) and gcp-run
+    # Copies the current action's repository to the specified location,
+    # so other actions from the same repo may be called (see gcp-run and deployment below)
+    # This allows us to use the same version of the action for both "prune" (the current action) and the others.
+    # Not gated on the cloud service because the "Remove environment" step (deployment) always runs.
     - name: Copy custom action repository
-      if: ${{ inputs.cloud_service == 'gcp' }}
       shell: bash
       run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
       env:
@@ -92,7 +92,7 @@ runs:
     ##################
 
     - name: Remove environment
-      uses: bobheadxi/deployments@v1.5.0
+      uses: ./.github/actions/ConfigureID/gh-actions/deployment
       with:
         step: delete-env
         token: ${{ inputs.github_token }}
