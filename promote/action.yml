@@ -60,8 +60,18 @@ runs:
   using: "composite"
 
   steps:
+    # Copies the current action's repository to the specified location,
+    # so other actions from the same repo may be called (see deployment, fetch-release-asset and sync below)
+    # This allows us to use the same version of the action for both "promote" (the current action) and the others
+    - name: Copy custom action repository
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
     - name: Start deployment
-      uses: bobheadxi/deployments@v1.5.0
+      uses: ./.github/actions/ConfigureID/gh-actions/deployment
       id: deployment
       with:
         step: start
@@ -70,21 +80,11 @@ runs:
         ref: tags/${{ inputs.tag }}
 
     - name: Download release
-      uses: dsaltares/fetch-gh-release-asset@1.1.2
+      uses: ./.github/actions/ConfigureID/gh-actions/fetch-release-asset
       with:
         version: 'tags/${{ inputs.tag }}'
         file: ${{ inputs.release_filename }}
         token: ${{ inputs.github_token }}
-
-    # Copies the current action's repository to the specified location, 
-    # so other actions from the same repo may be called (see sync below)
-    # This allows us to use the same version of the action for both "deploy" (the current action) and sync
-    - name: Copy custom action repository
-      shell: bash
-      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
-      env:
-        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
-        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
     - name: Unzip release
       uses: ./.github/actions/ConfigureID/gh-actions/zip
@@ -111,7 +111,7 @@ runs:
 
     - name: Update deployment status
       if: always()
-      uses: bobheadxi/deployments@v1.5.0
+      uses: ./.github/actions/ConfigureID/gh-actions/deployment
       with:
         step: finish
         token: ${{ inputs.github_token }}

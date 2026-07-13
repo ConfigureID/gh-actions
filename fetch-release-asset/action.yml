@@ -1,0 +1,44 @@
+name: 'Fetch Github Release Asset'
+description: 'Downloads an asset from a Github release'
+
+# Downloads a single asset from a Github release using the gh CLI.
+# Internal replacement for dsaltares/fetch-gh-release-asset (no third party action, no pinned node runtime).
+# Only the inputs used across this repo are supported.
+inputs:
+  version:
+    description: 'The release to fetch, in the form "tags/<tag_name>"'
+    required: true
+  file:
+    description: 'The name of the release asset to download'
+    required: true
+  target:
+    description: 'Target file path. If not specified, the asset is downloaded to the current directory keeping its name'
+    required: false
+    default: ''
+  token:
+    description: 'The Github token used to fetch the release'
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download release asset
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+        VERSION: ${{ inputs.version }}
+        FILE: ${{ inputs.file }}
+        TARGET: ${{ inputs.target }}
+      run: |
+        set -euo pipefail
+        # Callers always pass "tags/<tag_name>"; gh release download expects the bare tag
+        TAG="${VERSION#tags/}"
+        echo "Downloading asset '$FILE' from release '$TAG' of '$REPO'"
+        if [ -n "$TARGET" ]; then
+          mkdir -p "$(dirname "$TARGET")"
+          gh release download "$TAG" --repo "$REPO" --pattern "$FILE" --output "$TARGET" --clobber
+        else
+          gh release download "$TAG" --repo "$REPO" --pattern "$FILE" --clobber
+        fi

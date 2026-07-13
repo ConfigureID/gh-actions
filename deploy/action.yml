@@ -81,8 +81,18 @@ runs:
           echo "artifact_name=${{ inputs.artifact_name != '' && inputs.artifact_name || 'build-output' }}" >> $GITHUB_OUTPUT;
         fi
 
+    # Copies the current action's repository to the specified location,
+    # so other actions from the same repo may be called (see deployment, fetch-release-asset and sync below)
+    # This allows us to use the same version of the action for both "deploy" (the current action) and the others
+    - name: Copy custom action repository
+      shell: bash
+      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
+      env:
+        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
+        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
+
     - name: Start build deployment
-      uses: bobheadxi/deployments@v1.5.0
+      uses: ./.github/actions/ConfigureID/gh-actions/deployment
       id: deployment
       with:
         step: start
@@ -101,21 +111,11 @@ runs:
     - name: Download release asset
       # If "promote release" mode, download the compressed asset from the release
       if: ${{ inputs.release != '' }}
-      uses: dsaltares/fetch-gh-release-asset@1.1.2
+      uses: ./.github/actions/ConfigureID/gh-actions/fetch-release-asset
       with:
         version: 'tags/${{ inputs.release }}'
         file: ${{ steps.mode.outputs.artifact_name }}
         token: ${{ inputs.github_token }}
-
-    # Copies the current action's repository to the specified location, 
-    # so other actions from the same repo may be called (see sync below)
-    # This allows us to use the same version of the action for both "deploy" (the current action) and sync
-    - name: Copy custom action repository
-      shell: bash
-      run: bash ${{ github.action_path }}/../scripts/copy_actions_repo.sh
-      env:
-        CUSTOM_ACTION_REPO_SUBDIRECTORY: ${{ github.action_path }}
-        DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
     - name: Unzip release
       # If "promote release" mode, decompress the release asset
@@ -170,7 +170,7 @@ runs:
     
     - name: Update deployment status
       if: always()
-      uses: bobheadxi/deployments@v1.5.0
+      uses: ./.github/actions/ConfigureID/gh-actions/deployment
       with:
         step: finish
         token: ${{ inputs.github_token }}
