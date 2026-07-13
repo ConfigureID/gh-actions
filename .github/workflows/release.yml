@@ -1,0 +1,95 @@
+name: Release
+
+# Workflow to create a new release of this repository.
+#
+# Steps:
+# - Resolves the new version (provided as input, or auto-incremented from the latest tag)
+# - Updates the self-references to this repo's actions (eg ConfigureID/gh-actions/playwright@vNN)
+#   in every tracked text file (reusable workflows, README examples, scripts, Dockerfiles, etc).
+#   They must be hardcoded until https://github.com/actions/toolkit/issues/1264 is done,
+#   so this workflow keeps them in sync with the release tag automatically.
+# - Commits the bump, creates the tag and the GitHub release
+#
+# NOTE: if the default branch is protected, the github-actions bot must be allowed to push to it.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (eg v25). If empty, the latest tag is incremented'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          # Required to list the existing tags to auto-increment the version
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            LAST=$(git tag -l | grep -E '^v[0-9]+$' | sort -V | tail -1)
+            VERSION="v$(( ${LAST#v} + 1 ))"
+          fi
+
+          if ! echo "$VERSION" | grep -qE '^v[0-9]+$'; then
+            echo "::error::Invalid version '$VERSION'. Expected format: v<number> (eg v25)"
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
+            echo "::error::Tag $VERSION already exists"
+            exit 1
+          fi
+
+          echo "Releasing $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update self-references to this repo's actions
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Find every tracked file containing versioned self-references and bump them.
+          # -I skips binary files, so any text format (yml, md, json, sh, Dockerfile, ...) is covered.
+          FILES=$(git grep -I -lE 'ConfigureID/gh-actions[^@]*@v[0-9]+' || true)
+
+          if [ -n "$FILES" ]; then
+            echo "Updating self-references to @$VERSION in:"
+            echo "$FILES"
+            echo "$FILES" | xargs sed -i -E "s|(ConfigureID/gh-actions[^@]*)@v[0-9]+|\1@$VERSION|g"
+          else
+            echo "No self-references found"
+          fi
+
+          git diff --stat
+
+      - name: Commit, tag and create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # The self-references may already be up to date (eg when re-running a failed release)
+          if ! git diff --quiet; then
+            git add -A
+            git commit -m "Release $VERSION"
+          fi
+
+          git tag "$VERSION"
+          git push origin HEAD "refs/tags/$VERSION"
+          gh release create "$VERSION" --generate-notes
