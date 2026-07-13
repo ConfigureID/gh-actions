@@ -87,9 +87,9 @@ runs:
         DESTINATION_PATH: ${{ github.workspace }}/.github/actions
 
     - name: Unzip release
-      uses: ./.github/actions/ConfigureID/gh-actions/zip
-      with:
-        args: unzip -qq ${{ inputs.release_filename }} -d ./tmp
+      # unzip is preinstalled on the GitHub-hosted Ubuntu runners
+      shell: bash
+      run: unzip -qq ${{ inputs.release_filename }} -d ./tmp
 
     # Sync to Cloud Service
     - name: Sync to Cloud Service

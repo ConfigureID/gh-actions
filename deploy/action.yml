@@ -119,10 +119,10 @@ runs:
 
     - name: Unzip release
       # If "promote release" mode, decompress the release asset
+      # unzip is preinstalled on the GitHub-hosted Ubuntu runners
       if: ${{ inputs.release != '' }}
-      uses: ./.github/actions/ConfigureID/gh-actions/zip
-      with:
-        args: unzip -qq ${{ steps.mode.outputs.artifact_name }} -d ./tmp
+      shell: bash
+      run: unzip -qq ${{ steps.mode.outputs.artifact_name }} -d ./tmp
 
     # Loads metadata.json and adds the current CI run information a "publish info"
     - name: Add publish info to project metadata JSON
