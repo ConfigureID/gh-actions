@@ -66,5 +66,5 @@ runs:
       with:
         github-token: ${{ inputs.token }}
         script: |
-          const script = require(`${process.env.ACTION_PATH}/../scripts/deployment.js`);
+          const script = require(`${process.env.ACTION_PATH}/deployment.js`);
           await script({ github, context, core });
