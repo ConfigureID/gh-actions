@@ -635,3 +635,75 @@ jobs:
           release: ${{ github.event.release.tag_name }}
           npm_publish_token: ${{ secrets.NPM_PUBLISH_TOKEN }}
 ```
+
+### Fetch Github Release Asset
+
+> Downloads an asset from a Github release
+
+See contents [here](fetch-release-asset/action.yml).
+
+Internal replacement for `dsaltares/fetch-gh-release-asset`, implemented with the `gh` CLI (no third party dependencies, no pinned node runtime). Only the inputs used across this repo are supported. Used internally by the `deploy`, `promote` and `npm-publish` actions.
+
+**Inputs**
+- `version`: The release to fetch, in the form `tags/<tag_name>`
+- `file`: The name of the release asset to download
+- `target` (optional): Target file path. If not set, the asset is downloaded to the current directory keeping its name
+- `token` (optional): Github token used to fetch the release (defaults to `github.token`)
+
+**Usage**
+```yaml
+jobs:
+   fetch-asset:
+    name: Download release asset
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download release asset
+        uses: ConfigureID/gh-actions/fetch-release-asset@v24
+        with:
+          version: tags/v1.4.3
+          file: imp-adidas-v1.4.3.zip
+          target: tmp/release.zip
+```
+
+### Github Deployment
+
+> Creates, finishes or removes Github Deployments and their statuses
+
+See contents [here](deployment/action.yml).
+
+Internal replacement for `bobheadxi/deployments`, implemented with `actions/github-script` (no third party dependencies, no pinned node runtime). Only the steps used across this repo are supported. Used internally by the `deploy`, `promote` and `prune` actions.
+
+**Steps (via the `step` input)**
+- `start`: Creates a deployment for the environment and marks it as `in_progress`. Returns `deployment_id` and `env` as outputs
+- `finish`: Sets the final `status` of an existing deployment and, on success, its environment URL (`env_url`). Deactivates the previous deployments of the environment
+- `delete-env`: Deletes all deployments of the environment and the environment itself
+
+**Usage**
+```yaml
+jobs:
+   deploy:
+    name: Deploy with deployment tracking
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Start deployment
+        uses: ConfigureID/gh-actions/deployment@v24
+        id: deployment
+        with:
+          step: start
+          env: staging
+
+      - name: Deploy the app
+        ...
+
+      - name: Update deployment status
+        if: always()
+        uses: ConfigureID/gh-actions/deployment@v24
+        with:
+          step: finish
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: https://somedomain.com/apps/adidas/staging
+```
