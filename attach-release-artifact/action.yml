@@ -41,11 +41,8 @@ runs:
         echo "Artifact files count: $FILE_COUNT"
         echo "file_count=$FILE_COUNT" >> "$GITHUB_OUTPUT"
 
-    - name: Install zip
-      if: steps.count_files.outputs.file_count != '1'
-      uses: montudor/action-zip@v1
-
     - name: Compress files
+      # zip is preinstalled on the GitHub-hosted Ubuntu runners
       shell: bash
       if: steps.count_files.outputs.file_count != '1'
       run: zip -qq -r ../${{ inputs.filename }}.zip .

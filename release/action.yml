@@ -37,10 +37,8 @@ runs:
         name: ${{ inputs.artifact_name }}
         path: ./tmp
 
-    - name: Install zip
-      uses: montudor/action-zip@v1
-
     - name: Compress files
+      # zip is preinstalled on the GitHub-hosted Ubuntu runners
       shell: bash
       run: zip -qq -r ../${{ inputs.release_filename }}.zip .
       working-directory: ./tmp
