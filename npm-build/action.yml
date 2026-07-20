@@ -55,7 +55,7 @@ runs:
         ref: ${{ inputs.source_ref }}
 
     - name: Install Node.js and Restore Cache
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ inputs.node_version }}
         node-version-file: ${{ inputs.node-version-file }}
