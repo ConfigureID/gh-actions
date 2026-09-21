@@ -30,7 +30,7 @@ See contents [here](.github/workflows/npm-build.yml).
 ```yaml
 jobs:
   build:
-    uses: ConfigureID/gh-actions/.github/workflows/npm-build.yml@v24
+    uses: ConfigureID/gh-actions/.github/workflows/npm-build.yml@v25
     with:
       node_version: 14
       # Directory where this project is built (some use dist, others build, etc)
@@ -147,7 +147,7 @@ jobs:
         ...
 
       - name: Build project
-        uses: ConfigureID/gh-actions/npm-build@v24
+        uses: ConfigureID/gh-actions/npm-build@v25
         with:
           node_version: 14
           # Directory where this project is built (some use dist, others build, etc)
@@ -184,7 +184,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy branch
-        uses:  ConfigureID/gh-actions/deploy@v24
+        uses:  ConfigureID/gh-actions/deploy@v25
         with:
           # Base URL where the app is deployed
           base_url: ${{ vars.BASE_URL }}
@@ -259,7 +259,7 @@ jobs:
         id: extract_branch
         
       - name: Prunes enviroment and files
-        uses: ConfigureID/gh-actions/gh-prune@v24
+        uses: ConfigureID/gh-actions/gh-prune@v25
         with:
           # Directory where the project must be deployed to
           to: branches/${{ steps.extract_branch.outputs.current_branch }}
@@ -297,7 +297,7 @@ jobs:
         ...
 
       - name: Create release
-        uses: ConfigureID/gh-actions/release@v24
+        uses: ConfigureID/gh-actions/release@v25
         with:
           # Optional. Commit reference, only used when the tag does not exist to create it
           source_ref: main
@@ -353,7 +353,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/playwright@v24
+        uses: ConfigureID/gh-actions/playwright@v25
         with:
           # Test on the branch deployment on GCP
           base_url: ${{ format('https://{0}/{1}/branches/{2}', vars.BASE_URL, vars.NAMESPACE, github.event.pull_request.head.ref) }}
@@ -374,7 +374,7 @@ jobs:
 
     steps:
       - name: E2E Test
-        uses: ConfigureID/gh-actions/playwright@v24
+        uses: ConfigureID/gh-actions/playwright@v25
         with:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           browser: chromium
@@ -419,7 +419,7 @@ jobs:
 
     steps:
       - name: Create reports
-        uses: ConfigureID/gh-actions/test-report-pr@v24
+        uses: ConfigureID/gh-actions/test-report-pr@v25
 
 
        - name: Something after
@@ -451,7 +451,7 @@ jobs:
 
     steps:
       - name: Upload E2E Test HTML reports
-        uses: ConfigureID/gh-actions/test-report-cloud@v24
+        uses: ConfigureID/gh-actions/test-report-cloud@v25
 
 
        - name: Something after
@@ -481,7 +481,7 @@ jobs:
 
     steps:
       - name: Get JSON "version" property value
-        uses: ConfigureID/gh-actions/get-remote-json-property@v24
+        uses: ConfigureID/gh-actions/get-remote-json-property@v25
         id: get-version
         with: 
           url: https://someurl.com/build.json
@@ -515,7 +515,7 @@ jobs:
     
     steps:
       - name: Get deployed version
-        uses: ConfigureID/gh-actions/get-version@v24
+        uses: ConfigureID/gh-actions/get-version@v25
         id: deployed-version
         with: 
           base_url: somedomain.com/apps
@@ -552,7 +552,7 @@ jobs:
     
     steps:
       - name: Get current version in staging
-        uses: ConfigureID/gh-actions/compare-version@v24
+        uses: ConfigureID/gh-actions/compare-version@v25
         id: compare-version
         with: 
           version: v1.4.3
@@ -598,7 +598,7 @@ jobs:
         ...
 
       - name: Upload artifact as release asset
-        uses: ConfigureID/gh-actions/attach-release-artifact@v24
+        uses: ConfigureID/gh-actions/attach-release-artifact@v25
         with:
           release_name: v1.4.3
           filename: imp-adidas-v1.4.3
@@ -630,7 +630,7 @@ jobs:
       - name: Create build artifact
         ...
 
-      - uses: ConfigureID/gh-actions/npm-publish@v24
+      - uses: ConfigureID/gh-actions/npm-publish@v25
         with:
           release: ${{ github.event.release.tag_name }}
           npm_publish_token: ${{ secrets.NPM_PUBLISH_TOKEN }}
@@ -659,7 +659,7 @@ jobs:
 
     steps:
       - name: Download release asset
-        uses: ConfigureID/gh-actions/fetch-release-asset@v24
+        uses: ConfigureID/gh-actions/fetch-release-asset@v25
         with:
           version: tags/v1.4.3
           file: imp-adidas-v1.4.3.zip
@@ -688,7 +688,7 @@ jobs:
 
     steps:
       - name: Start deployment
-        uses: ConfigureID/gh-actions/deployment@v24
+        uses: ConfigureID/gh-actions/deployment@v25
         id: deployment
         with:
           step: start
@@ -699,7 +699,7 @@ jobs:
 
       - name: Update deployment status
         if: always()
-        uses: ConfigureID/gh-actions/deployment@v24
+        uses: ConfigureID/gh-actions/deployment@v25
         with:
           step: finish
           status: ${{ job.status }}

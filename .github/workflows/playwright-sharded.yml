@@ -22,59 +22,59 @@ on:
         required: false
     inputs:
       shards:
-        description: 'Number of shards to use (parallel execution). Default to 3'
+        description: "Number of shards to use (parallel execution). Default to 3"
         type: number
         default: 3
       trace:
         description: If true, it will create a full trace of ALL tests. If false, only tests that fail will create a trace
         default: false
         type: boolean
-      node_version:  
-        description: 'Node.js version to use'
+      node_version:
+        description: "Node.js version to use"
         type: string
-      node-version-file:  
-        description: 'File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions.'
+      node-version-file:
+        description: "File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions."
         type: string
-        default: '.node-version'
+        default: ".node-version"
       dist_dir:
-        description: 'Directory where the built project must be downloaded to'
+        description: "Directory where the built project must be downloaded to"
         required: false
-        default: 'dist'
+        default: "dist"
         type: string
       source_ref:
-        description: 'The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)'
+        description: "The branch, tag or SHA to checkout. If not specified, the default branch will be used (usually main)"
         required: false
         type: string
       artifact_name:
-        description: 'The name of the artifact to download. Default is build-output'
+        description: "The name of the artifact to download. Default is build-output"
         required: false
         default: build-output
         type: string
       base_url:
-        description: 'Base URL of the remote application to be tested. If not defined, a local server is run to test the application'
+        description: "Base URL of the remote application to be tested. If not defined, a local server is run to test the application"
         required: false
         type: string
       browser:
-        description: 'Browser to use in Playwright. Defaults to Chromium headless'
+        description: "Browser to use in Playwright. Defaults to Chromium headless"
         required: false
         default: chromium
         type: string
       subdir:
-        description: 'If the tests are run in a subproject of a monorepo, specify the path'
+        description: "If the tests are run in a subproject of a monorepo, specify the path"
         required: false
-        default: '.'
+        default: "."
         type: string
       test_name:
-        description: 'Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name'
+        description: "Name of the app/lib is being tested, in case multiple E2E tests are run. It will be added to the artifact name"
         required: false
-        default: ''
+        default: ""
         type: string
       test_results_pattern:
-        description: 'Pattern to use to find the test reports and upload them'
+        description: "Pattern to use to find the test reports and upload them"
         required: false
         default: e2e/results/junit*.xml
         type: string
-      
+
 jobs:
   prepare:
     timeout-minutes: 60
@@ -85,7 +85,7 @@ jobs:
     steps:
       - name: Prepare E2E Testing environment
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v24
+        uses: ConfigureID/gh-actions/playwright@v25
         with:
           action: "prepare"
           subdir: ${{ inputs.subdir }}
@@ -95,7 +95,7 @@ jobs:
           node-version-file: ${{ inputs.node-version-file }}
           source_ref: ${{ inputs.source_ref }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
+
       - name: Create Matrix shard param
         id: matrix
         shell: bash
@@ -117,7 +117,7 @@ jobs:
     steps:
       - name: Test
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v24
+        uses: ConfigureID/gh-actions/playwright@v25
         with:
           action: "test"
           subdir: ${{ inputs.subdir }}
@@ -134,7 +134,7 @@ jobs:
           # Only required if no base url is sent (to create a local server)
           # dist_dir: ${{ inputs.dist_dir }}
           # artifact_name: ${{ inputs.artifact_name }}
-          
+
           # Only required if no shard is specified (when sharding this is required in the "merge" action)
           # test_name: ${{ inputs.test_name }}
           # test_results_pattern: ${{ inputs.test_results_pattern }}
@@ -148,7 +148,7 @@ jobs:
     steps:
       - name: Merge Test Results
         # TODO: Update playwright action version when the version of this repo changes. Required until https://github.com/actions/toolkit/issues/1264 is DONE
-        uses: ConfigureID/gh-actions/playwright@v24
+        uses: ConfigureID/gh-actions/playwright@v25
         with:
           action: "merge"
           subdir: ${{ inputs.subdir }}
